@@ -190,15 +190,15 @@ router.put("/updatforJobApply/:id", verifyToken, async (req, res) => {
             var transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
-       user: 'bluenetwrk@gmail.com',
-      pass: 'vwzv axcq ywrw bxjd'
+       user: 'admin@itwalkin.com',
+      pass: 'hvzd mjnq yfxa eljs'
                 }
               });
               var mailOptions = {
-                from: 'bluenetwrk@gmail.com',
+                from: 'admin@itwalkin.com',
                 to: Usermail,
                 subject: `Succesfully Applied for the Job ${JobTile}`,
-                text: "you have applied for job successfully",
+                text: "You have applied for job successfully",
                 html: `You have Succesfully Applied for the Job ${JobTile}`+'<p>Click <a href="https://www.itwalkin.com/Jobdetails/' + btoa(req.params.id) + '"> here </a> to check the full details about the applied Job</p>'
                 // context:paymentResult
               };
