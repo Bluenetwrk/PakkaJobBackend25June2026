@@ -10,7 +10,7 @@ const getAccessToken = async (code) => {
         code: code,
         client_id: process.env.LINKEDIN_CLIENT_ID,
         client_secret: process.env.LINKEDIN_CLIENT_SECRET,
-        redirect_uri: 'http://localhost:3000/LinkenIn/callback',
+        redirect_uri: 'https://www.itwalkin.com/LinkedIn/callback',
     });
 
     const response = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
@@ -47,9 +47,8 @@ const getUserData = async (accessToken) => {
 
 const linkedInCallback = async (req, res) => {
     console.log(req)
-    try {
+    try {   
         const { code } = req.query;
-
         const accessToken = await getAccessToken(code);
         const userData = await getUserData(accessToken.access_token);
 

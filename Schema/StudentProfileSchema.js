@@ -85,6 +85,12 @@ const profileSchema= new mongoose.Schema({
     age:{
         type:String
     },
+    EditResumeCounter:{
+        
+    },
+    DownloadResumeCounter:{
+
+    },
     qualificationDetails:[{
         degree:{
             type:String

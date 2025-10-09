@@ -12,7 +12,7 @@ const AskQuestionModel=require("../Schema/AskQuesionsSchema")
 
 const { MongoClient } = require("mongodb")
 // const {getData} = require("../mongodb")
-const {ObjectID} = require("mongodb")
+const {ObjectID} = require("mongodb") 
 const {gtoken} = require('./StudentProfileRoutes')
 const secretKey = "abcde"
 const jwt = require("jsonwebtoken")
