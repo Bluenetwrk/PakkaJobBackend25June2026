@@ -46,6 +46,7 @@ const getUserData = async (accessToken) => {
 };
 
 const linkedInCallback = async (req, res) => {
+    console.log(req)
     try {
         const { code } = req.query;
 
