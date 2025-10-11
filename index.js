@@ -27,6 +27,11 @@ app.use(cors())
 app.use(cookieparser())
 
 const fs=require("fs")
+app.get('LinkedIn', (req, res) => {
+  const scope = 'openid profile email w_member_social';
+  const redirectURL = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${process.env.LINKEDIN_CLIENT_ID}&redirect_uri=${process.env.LINKEDIN_REDIRECT_URI}&scope=${scope}`;
+  res.redirect(redirectURL);
+});
 app.use(express.static('public'))
 app.use("/StudentProfile",StudentProfileRoutes)
 app.use("/EmpProfile",EmpProfileRoutes)
