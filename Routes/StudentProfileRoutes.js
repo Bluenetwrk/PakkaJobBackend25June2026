@@ -366,7 +366,7 @@ router.get("/getAllJobseekers", async (req, res) => {
     }
 })
 //  getting student-profile with applied user id for Employee......
-router.get("/getAppliedProfileByIds/:id", async (req, res) => {
+router.get("/getAppliedProfileByIds/:id",verifyToken, async (req, res) => {
     let comingArray = req.params.id
     let spliArray = comingArray.split(",")
 
