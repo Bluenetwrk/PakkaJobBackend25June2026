@@ -357,7 +357,7 @@ function CheckComp(req, res, next){
 
 
 // ....get total number of Jobseekers for Admin and also for Emplyee search all condidiate..
-router.get("/getAllJobseekers", verifyToken, async (req, res) => {
+router.get("/getAllJobseekers", async (req, res) => {
     try {
         let result = await StudentProfileModel.find()
         res.send(result)
@@ -366,7 +366,7 @@ router.get("/getAllJobseekers", verifyToken, async (req, res) => {
     }
 })
 //  getting student-profile with applied user id for Employee......
-router.get("/getAppliedProfileByIds/:id",verifyToken, async (req, res) => {
+router.get("/getAppliedProfileByIds/:id", async (req, res) => {
     let comingArray = req.params.id
     let spliArray = comingArray.split(",")
 
