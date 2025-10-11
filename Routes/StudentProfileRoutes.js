@@ -1,4 +1,5 @@
 const express = require("express");
+const app = express();
 const router = express.Router();
 const StudentProfileModel = require("../Schema/StudentProfileSchema")
 const DeletedJobSeeker = require("../Schema/deletedJobSeeker")
@@ -9,12 +10,15 @@ const { body, validationResult } = require("express-validator")
 const jwt = require("jsonwebtoken")
 const secretKey = "abcde";
 var nodemailer = require('nodemailer');
+const axios = require('axios')
+const bodyParser = require('body-parser')
 // const importverifyToken = require('./JobpostsRoutes')
 const Archived= require("../Schema/ArchiveJobsAchema")
 const Deleted= require("../Schema/DeletedJobsSchema")
 const fs = require('fs')
 const mongoose = require("mongoose");
-
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 // Middleware
 function verifyToken(req, res, next) {
     if (req.headers['authorization']) {
@@ -46,42 +50,42 @@ function verifyHomeJobs(req, res, next){
 }
 }
 
-const multer = require('multer');
-const { v4: uuidv4 } = require('uuid');
-const path = require('path');
+// const multer = require('multer');
+// const { v4: uuidv4 } = require('uuid');
+// const path = require('path');
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'public/Images');
-    },
-    filename: function (req, file, cb) {
-        cb(null, uuidv4() + "_" + Date.now() + path.extname(file.originalname));
-    }
-});
+// const storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//         cb(null, 'public/Images');
+//     },
+//     filename: function (req, file, cb) {
+//         cb(null, uuidv4() + "_" + Date.now() + path.extname(file.originalname));
+//     }
+// });
 
-const upload = multer({ storage: storage });
+// const upload = multer({ storage: storage });
 
-router.put("/uploadImage/:id", upload.single('image'), async (req, res) => {
-    imagePath = req.file.filename
-    try {
-const binary = Buffer.from(imagePath)
-        let result = await StudentProfileModel.updateOne(
-            { _id: req.params.id },
-            // { $set: { image: `https://itwalkin-backend-testrelease-2-0-1-0824.onrender.com/Images/${imagePath}` } }
-            // { $set: { image: `http://localhost:8080/Images/${imagePath}` } }
-            { $set: { image: `https://itwalkin-backend-testrelease-2-0-1-0824-ns0g.onrender.com/Images/${imagePath}` } }
-            //    { $set: { image: `https://i-twalkin-backend-testrelease-2-0-1-0824.vercel.app/Images/${imagePath}`}}
-// { $set: { image: binary } }
+// router.put("/uploadImage/:id", upload.single('image'), async (req, res) => {
+//     imagePath = req.file.filename
+//     try {
+// const binary = Buffer.from(imagePath)
+//         let result = await StudentProfileModel.updateOne(
+//             { _id: req.params.id },
+//             // { $set: { image: `https://itwalkin-backend-testrelease-2-0-1-0824.onrender.com/Images/${imagePath}` } }
+//             // { $set: { image: `http://localhost:8080/Images/${imagePath}` } }
+//             { $set: { image: `https://itwalkin-backend-testrelease-2-0-1-0824-ns0g.onrender.com/Images/${imagePath}` } }
+//             //    { $set: { image: `https://i-twalkin-backend-testrelease-2-0-1-0824.vercel.app/Images/${imagePath}`}}
+// // { $set: { image: binary } }
       
-        )
+//         )
 
-        if (result) {
-            res.send(result)
-        }
-    } catch (err) {
-        res.send("back error occured")
-    }
-})
+//         if (result) {
+//             res.send(result)
+//         }
+//     } catch (err) {
+//         res.send("back error occured")
+//     }
+// })
 router.post("/saveToken",verifyToken, async (req, res) => {
     try {
         let jobs = new StudentProfileModel(req.body)
@@ -94,36 +98,36 @@ router.post("/saveToken",verifyToken, async (req, res) => {
 }
 })
 
-// delete image for studentProfile....
-router.put("/deleteImage/:id", async (req, res) => {
-    const comingImagepath = req.body.image
-    // const trimImagepath = comingImagepath.replace("https://itwalkin-backend-testrelease-2-0-1-0824.onrender.com/Images/", "")
-    // const trimImagepath = comingImagepath.replace("http://localhost:8080/Images/", "")
-    const trimImagepath = comingImagepath.replace("https://itwalkin-backend-testrelease-2-0-1-0824-ns0g.onrender.com/Images/", "")
-    // const trimImagepath = comingImagepath.replace("https://i-twalkin-backend-testrelease-2-0-1-0824.vercel.app/Images/", "")
-    const filepath = `public/Images/${trimImagepath}`
-    try {
-        let result = await StudentProfileModel.updateOne(
-            { _id: req.params.id },
-            { $unset: req.body },
-            fs.unlinkSync(filepath, (err) => {
-                if (err) {
-                    //   console.error(`Error removing file: ${err}`);
-                    return 0;
-                } else {
-                    return 1
-                    // console.log("sucessss")
-                }
-            })
-        )
-        if (result) {
-            res.send("success")
-        }
-    } catch (err) {
-        res.send("back end error occured")
+// // delete image for studentProfile....
+// router.put("/deleteImage/:id", async (req, res) => {
+//     const comingImagepath = req.body.image
+//     // const trimImagepath = comingImagepath.replace("https://itwalkin-backend-testrelease-2-0-1-0824.onrender.com/Images/", "")
+//     // const trimImagepath = comingImagepath.replace("http://localhost:8080/Images/", "")
+//     const trimImagepath = comingImagepath.replace("https://itwalkin-backend-testrelease-2-0-1-0824-ns0g.onrender.com/Images/", "")
+//     // const trimImagepath = comingImagepath.replace("https://i-twalkin-backend-testrelease-2-0-1-0824.vercel.app/Images/", "")
+//     const filepath = `public/Images/${trimImagepath}`
+//     try {
+//         let result = await StudentProfileModel.updateOne(
+//             { _id: req.params.id },
+//             { $unset: req.body },
+//             fs.unlinkSync(filepath, (err) => {
+//                 if (err) {
+//                     //   console.error(`Error removing file: ${err}`);
+//                     return 0;
+//                 } else {
+//                     return 1
+//                     // console.log("sucessss")
+//                 }
+//             })
+//         )
+//         if (result) {
+//             res.send("success")
+//         }
+//     } catch (err) {
+//         res.send("back end error occured")
 
-    }
-})
+//     }
+// })
 
 
 const accountSid = 'ACbf18fad2a3317eaaee849f5c91b0bcee';
@@ -177,7 +181,7 @@ router.post("/verifyOtp", async (req, res) => {
     }
 })
 // .................Jobseeke Register ..............
-router.post("/JobseekerRegister", async (req, res) => {
+router.post("/JobseekerRegister",verifyToken, async (req, res) => {
     // console.log(req.body)    
     try {
         let user = await new StudentProfileModel(req.body)
@@ -275,7 +279,7 @@ router.post("/Glogin", body('email').isEmail(), async (req, res) => {
 //   });
 // .........get userprofile to show in my profile and for update , my profile, admin check profile..........
 
-router.get("/viewProfile/:id", async (req, res) => {
+router.get("/viewProfile/:id",CheckComp, async (req, res) => {
     try {
         let result = await StudentProfileModel.findOne({ _id: req.params.id })
         if (result) {
@@ -353,7 +357,7 @@ function CheckComp(req, res, next){
 
 
 // ....get total number of Jobseekers for Admin and also for Emplyee search all condidiate..
-router.get("/getAllJobseekers", CheckComp, async (req, res) => {
+router.get("/getAllJobseekers", verifyToken, async (req, res) => {
     try {
         let result = await StudentProfileModel.find()
         res.send(result)
@@ -362,7 +366,7 @@ router.get("/getAllJobseekers", CheckComp, async (req, res) => {
     }
 })
 //  getting student-profile with applied user id for Employee......
-router.get("/getAppliedProfileByIds/:id", async (req, res) => {
+router.get("/getAppliedProfileByIds/:id",verifyToken, async (req, res) => {
     let comingArray = req.params.id
     let spliArray = comingArray.split(",")
 
@@ -382,7 +386,7 @@ router.get("/getAppliedProfileByIds/:id", async (req, res) => {
 })
 
 // delete jobseeker Admin API
-router.delete("/deleteProfile/:id", async (req, res) => {
+router.delete("/deleteProfile/:id",verifyToken, async (req, res) => {
     try {
         let result = await StudentProfileModel.deleteOne({ _id: req.params.id })
         if (result) {
@@ -393,7 +397,7 @@ router.delete("/deleteProfile/:id", async (req, res) => {
     }
 })
 // update for approval from admin
-router.put("/setApproval/:id", async (req, res) => {
+router.put("/setApproval/:id",verifyToken, async (req, res) => {
     try {
         let result = await StudentProfileModel.updateOne(
             { _id: req.params.id },
@@ -407,7 +411,7 @@ router.put("/setApproval/:id", async (req, res) => {
     }
 })
 // update for Reject from admin
-router.put("/isReject/:id", async (req, res) => {
+router.put("/isReject/:id",verifyToken, async (req, res) => {
     try {
         let result = await StudentProfileModel.updateOne(
             { _id: req.params.id },
@@ -422,7 +426,7 @@ router.put("/isReject/:id", async (req, res) => {
 })
 // isOnhold status from admin
 
-router.put("/isOnhold/:id", async (req, res) => {
+router.put("/isOnhold/:id",verifyToken, async (req, res) => {
     try {
         let result = await StudentProfileModel.updateOne(
             { _id: req.params.id },
@@ -437,7 +441,7 @@ router.put("/isOnhold/:id", async (req, res) => {
 })
 
 // find all Approved Jobseekers for admin
-router.get("/getApprovedStu", async (req, res) => {
+router.get("/getApprovedStu",verifyToken, async (req, res) => {
     try {
         let result = await StudentProfileModel.aggregate([{ $match: { isApproved: true } }])
 
@@ -450,7 +454,7 @@ router.get("/getApprovedStu", async (req, res) => {
 })
 
 // find all which are not Approved Jobseekers for admin
-router.get("/getNotApprovedStu", async (req, res) => {
+router.get("/getNotApprovedStu",verifyToken, async (req, res) => {
     try {
         let result = await StudentProfileModel.aggregate([{ $match: { isApproved: false } }])
 
@@ -472,7 +476,7 @@ end.setUTCHours(23, 59, 59, 999);
 let startDay = start.toUTCString()
 let endDay = end.toUTCString()
 
-router.get("/getTodayStuProfile", async (req, res) => {
+router.get("/getTodayStuProfile",verifyToken, async (req, res) => {
     try {
         let result = await StudentProfileModel.find({ createdAt: { $gte: startDay, $lte: endDay } })
         if (result) {
@@ -484,7 +488,7 @@ router.get("/getTodayStuProfile", async (req, res) => {
     }
 })
 
-router.get("/getNoticePeriod", async (req, res) => {
+router.get("/getNoticePeriod",verifyToken, async (req, res) => {
     try {
         let result = await StudentProfileModel.find({ NoticePeriod: { $lte: "20 days" } })
         if (result) {
@@ -497,7 +501,7 @@ router.get("/getNoticePeriod", async (req, res) => {
 })
 
 // Search a job seeker for employer
-router.get("/getJobSeeker/:SearchKey", async (req, res) => {
+router.get("/getJobSeeker/:SearchKey",verifyToken, async (req, res) => {
     try {
         let result = await StudentProfileModel.find(
             {
@@ -523,7 +527,7 @@ router.get("/getJobSeeker/:SearchKey", async (req, res) => {
 })
 // message sending from admin
 
-router.put("/sendMessage/:id", async (req, res) => {
+router.put("/sendMessage/:id",verifyToken, async (req, res) => {
     try {
         let result = await StudentProfileModel.updateOne({
             _id: req.params.id
@@ -617,7 +621,7 @@ router.delete("/deleteJobSeeker/:id", async (req, res) => {
     }
 })
 // archived Job seeker for admin
-router.get("/getAllArchivedJobseekers", CheckComp,  async (req, res) => {
+router.get("/getAllArchivedJobseekers", verifyToken,  async (req, res) => {
     try {
         let result = await DeletedJobSeeker.find({}, { Archived: 1, _id: 0,createdAt:1 })
         res.send(result)
