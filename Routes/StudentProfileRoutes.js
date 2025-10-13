@@ -366,7 +366,7 @@ router.get("/getAllJobseekers", async (req, res) => {
     }
 })
 //  getting student-profile with applied user id for Employee......
-router.get("/getAppliedProfileByIds/:id",verifyToken, async (req, res) => {
+router.get("/getAppliedProfileByIds/:id", async (req, res) => {
     let comingArray = req.params.id
     let spliArray = comingArray.split(",")
 
@@ -501,7 +501,7 @@ router.get("/getNoticePeriod",verifyToken, async (req, res) => {
 })
 
 // Search a job seeker for employer
-router.get("/getJobSeeker/:SearchKey",verifyToken, async (req, res) => {
+router.get("/getJobSeeker/:SearchKey", async (req, res) => {
     try {
         let result = await StudentProfileModel.find(
             {
