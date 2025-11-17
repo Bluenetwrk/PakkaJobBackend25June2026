@@ -136,6 +136,13 @@ const profileSchema= new mongoose.Schema({
     Tags:[
         
     ],
+    personalDetails:[{
+        gender: {String},
+        maritalStatus: {String},
+        dob: {Date}
+    }],
+    achievements: [{String}],
+    interests: [{String}],
     tokenNo:[{
         tokenNo:{
         type:Number

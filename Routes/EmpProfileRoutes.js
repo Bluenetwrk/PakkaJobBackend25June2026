@@ -165,11 +165,14 @@ router.post("/verifyOtp", async (req, res) => {
         res.send("backend issue")
     }
 })
-router.post("/Glogin", async (req, res) => {
+router.post("/Glogin", body('email').isEmail(),async (req, res) => {
     // console.log(req.body)
     try {
     let { userId, gtoken, email, name, isApproved, ipAddress,Gpicture } = (req.body)
-
+        const error = validationResult(req)
+                if (!error.isEmpty()) {
+                    return res.send("invalid email")
+                }
         let user = await EmpProfileModel.findOne({ email: email });
         if (user == null) {
         //const user = await new EmpProfileModel(req.body)

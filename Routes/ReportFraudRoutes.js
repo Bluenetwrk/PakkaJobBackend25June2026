@@ -46,7 +46,7 @@ function verifyHomeJobs(req, res, next){
 }
 
 //submit fraud report form
-router.post("/reportFraud",verifyToken, async (req, res) => {
+router.post("/reportFraud", async (req, res) => {
     try {
         let jobs = new reportFraudModel(req.body)
         let result = await jobs.save()
