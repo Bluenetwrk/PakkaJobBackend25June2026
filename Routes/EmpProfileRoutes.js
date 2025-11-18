@@ -15,7 +15,7 @@ var nodemailer = require('nodemailer');
 const fs = require('fs')
 const axios = require('axios');
 const bodyParser = require('body-parser');
-  
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -69,7 +69,7 @@ router.put("/uploadImage/:id",upload.single('image'), async (req, res)=>{
         // {$set:{image: `http://localhost:8080/Images/${imagePath}`}}       
         {$set:{image: `https://itwalkin-backend-testrelease-2-0-1-0824-ns0g.onrender.com/Images/${imagePath}`}} 
         // {$set:{image: `https://i-twalkin-backend-testrelease-2-0-1-0824.vercel.app/Images/${imagePath}`}} 
-                   
+
     )
     if(result){
     res.send(result)
@@ -152,7 +152,7 @@ router.post("/verifyOtp", async (req, res) => {
             let saveUser = await EmpProfileModel({ phoneNumber: PhoneNumber, isApproved: isApproved  , ipAddress:ipAddress})
             let savedUser = await saveUser.save()
             if (savedUser) {
-                
+
                 let token = jwt.sign({ id: savedUser._id }, secretKey)
 
                 res.send({ status: "success", token: token, id: savedUser._id })
@@ -165,14 +165,11 @@ router.post("/verifyOtp", async (req, res) => {
         res.send("backend issue")
     }
 })
-router.post("/Glogin", body('email').isEmail(),async (req, res) => {
+router.post("/Glogin", async (req, res) => {
     // console.log(req.body)
     try {
     let { userId, gtoken, email, name, isApproved, ipAddress,Gpicture } = (req.body)
-        const error = validationResult(req)
-                if (!error.isEmpty()) {
-                    return res.send("invalid email")
-                }
+
         let user = await EmpProfileModel.findOne({ email: email });
         if (user == null) {
         //const user = await new EmpProfileModel(req.body)
@@ -192,7 +189,7 @@ var transporter = nodemailer.createTransport({
     subject: `Successfully Registered with Itwalkin`,
     html: '<p>Welcome to Itwalkin Job Portal</p>'+'<p>click <a href="http://www.itwalkin.in">itwalkin</a> to explore more </p>'
   };
-  
+
   transporter.sendMail(mailOptions,  function(error, info){
     if (error) {
     //   console.log(error);
@@ -246,8 +243,8 @@ router.post("/NewEmployeeRegistration",  async(req, res)=>{
         res.json(error.code);
         // console.log(error.code)
     }
-    
-    
+
+
 })
 
 // router.post('/get-token', async (req, res) => {
@@ -313,7 +310,7 @@ router.get("/getProfile/:id", CheckComp, async (req, res) => {
         if (result) {
             res.send({status:"success", result})
         } 
-        
+
     } catch (err) {
         res.send("back end error occured")
     }
@@ -339,7 +336,7 @@ router.put("/updatProfile/:id", verifyToken, async (req, res) => {
         if (result) {
             res.send("success")
         } 
-        
+
     } catch (err) {
         res.send("back end error occured")
     }
@@ -655,4 +652,3 @@ res.send("fail")
 
 
 module.exports = router
-// ................................Login with password.........................

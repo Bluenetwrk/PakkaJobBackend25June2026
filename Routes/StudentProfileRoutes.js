@@ -1,5 +1,4 @@
 const express = require("express");
-const app = express();
 const router = express.Router();
 const StudentProfileModel = require("../Schema/StudentProfileSchema")
 const DeletedJobSeeker = require("../Schema/deletedJobSeeker")
@@ -10,15 +9,12 @@ const { body, validationResult } = require("express-validator")
 const jwt = require("jsonwebtoken")
 const secretKey = "abcde";
 var nodemailer = require('nodemailer');
-const axios = require('axios')
-const bodyParser = require('body-parser')
 // const importverifyToken = require('./JobpostsRoutes')
 const Archived= require("../Schema/ArchiveJobsAchema")
 const Deleted= require("../Schema/DeletedJobsSchema")
 const fs = require('fs')
 const mongoose = require("mongoose");
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+
 // Middleware
 function verifyToken(req, res, next) {
     if (req.headers['authorization']) {
@@ -76,7 +72,7 @@ const binary = Buffer.from(imagePath)
             { $set: { image: `https://itwalkin-backend-testrelease-2-0-1-0824-ns0g.onrender.com/Images/${imagePath}` } }
             //    { $set: { image: `https://i-twalkin-backend-testrelease-2-0-1-0824.vercel.app/Images/${imagePath}`}}
 // { $set: { image: binary } }
-      
+
         )
 
         if (result) {
@@ -91,7 +87,7 @@ router.post("/saveToken",verifyToken, async (req, res) => {
         let jobs = new StudentProfileModel(req.body)
         let result = await jobs.save()
         res.send("success")
-    
+
 } catch (error) {
     // console.log(error.message)
     res.send("server issue ")
@@ -181,7 +177,7 @@ router.post("/verifyOtp", async (req, res) => {
     }
 })
 // .................Jobseeke Register ..............
-router.post("/JobseekerRegister",verifyToken, async (req, res) => {
+router.post("/JobseekerRegister", async (req, res) => {
     // console.log(req.body)    
     try {
         let user = await new StudentProfileModel(req.body)
@@ -210,7 +206,7 @@ router.post("/Glogin", body('email').isEmail(), async (req, res) => {
             var transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
-                    user: 'admin@itwalkin.com',
+                    user: 'admin@itwalkin.comm',
                     pass: 'hvzd mjnq yfxa eljs'
                 }
             });
@@ -247,7 +243,7 @@ router.post("/Glogin", body('email').isEmail(), async (req, res) => {
 // app.get('/auth/linkedin/callback', async (req, res) => {
 //     const code = req.query.code;
 //     const redirectUri = 'http://localhost:3000/auth/linkedin/callback';
-  
+
 //     const tokenResponse = await axios.post('https://www.linkedin.com/oauth/v2/accessToken', null, {
 //       params: {
 //         grant_type: 'authorization_code',
@@ -257,29 +253,29 @@ router.post("/Glogin", body('email').isEmail(), async (req, res) => {
 //         client_secret: 'YOUR_CLIENT_SECRET'
 //       }
 //     });
-  
+
 //     const accessToken = tokenResponse.data.access_token;
-  
+
 //     const profileResponse = await axios.get('https://api.linkedin.com/v2/me', {
 //       headers: { Authorization: `Bearer ${accessToken}` }
 //     });
-  
+
 //     const emailResponse = await axios.get('https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))', {
 //       headers: { Authorization: `Bearer ${accessToken}` }
 //     });
-  
+
 //     const userData = {
 //       id: profileResponse.data.id,
 //       name: `${profileResponse.data.localizedFirstName} ${profileResponse.data.localizedLastName}`,
 //       email: emailResponse.data.elements[0]['handle~'].emailAddress
 //     };
-  
+
 //     // Save userData to MongoDB or start session
 //     res.json(userData);
 //   });
 // .........get userprofile to show in my profile and for update , my profile, admin check profile..........
 
-router.get("/viewProfile/:id",CheckComp, async (req, res) => {
+router.get("/viewProfile/:id", async (req, res) => {
     try {
         let result = await StudentProfileModel.findOne({ _id: req.params.id })
         if (result) {
@@ -317,11 +313,11 @@ router.post("/loginforAdmin", body('email').isEmail(), async (req, res) => {
 router.put("/updatProfile/:id", verifyToken, async (req, res) => {
     try {
       const { tokenNo, HRsEmployerFeedBack, interview, ...rest } = req.body;
-  
+
       const updateFields = {
         $set: rest,
       };
-  
+
       // Add to arrays only if values are provided
       if (tokenNo || HRsEmployerFeedBack || interview) {
         updateFields.$addToSet = {};
@@ -329,12 +325,12 @@ router.put("/updatProfile/:id", verifyToken, async (req, res) => {
         if (HRsEmployerFeedBack) updateFields.$addToSet.HRsEmployerFeedBack = HRsEmployerFeedBack;
         if (interview) updateFields.$addToSet.interview = interview;
       }
-  
+
       const result = await StudentProfileModel.updateOne(
         { _id: req.params.id },
         updateFields
       );
-  
+
       if (result.modifiedCount > 0) {
         res.send("success");
       } else {
@@ -357,7 +353,7 @@ function CheckComp(req, res, next){
 
 
 // ....get total number of Jobseekers for Admin and also for Emplyee search all condidiate..
-router.get("/getAllJobseekers", async (req, res) => {
+router.get("/getAllJobseekers", CheckComp, async (req, res) => {
     try {
         let result = await StudentProfileModel.find()
         res.send(result)
@@ -397,7 +393,7 @@ router.delete("/deleteProfile/:id", async (req, res) => {
     }
 })
 // update for approval from admin
-router.put("/setApproval/:id",async (req, res) => {
+router.put("/setApproval/:id", async (req, res) => {
     try {
         let result = await StudentProfileModel.updateOne(
             { _id: req.params.id },
@@ -545,7 +541,7 @@ router.put("/sendMessage/:id", async (req, res) => {
 
 //  find all email only of jobseekers
 
-router.get("/getAllemail",  async (req, res) => {
+router.get("/getAllemail", verifyToken, async (req, res) => {
     try {
         let result = await StudentProfileModel.find({}, { email: 1, _id: 0 })
         res.send(result)
@@ -562,7 +558,7 @@ Date.prototype.subtractDays = function (d) {
     }
 let a = new Date();
 a.subtractDays(100);
-router.get("/RecentLogin", async(req, res)=>{
+router.get("/RecentLogin", verifyToken, async(req, res)=>{
     try{
         let result = await StudentProfileModel.find({ LogedInTime: {$gte:a , $lte:today} })
         if(result){
@@ -574,7 +570,7 @@ router.get("/RecentLogin", async(req, res)=>{
 })
 
 // find all Online for admin
-router.get("/checkOnline", async (req, res) => {
+router.get("/checkOnline", verifyToken, async (req, res) => {
     try {
         // let result = await StudentProfileModel.aggregate([{ $match: { isApproved: false } }])
         let result = await StudentProfileModel.aggregate([{$match:{online:true}}])
@@ -621,7 +617,7 @@ router.delete("/deleteJobSeeker/:id", async (req, res) => {
     }
 })
 // archived Job seeker for admin
-router.get("/getAllArchivedJobseekers", async (req, res) => {
+router.get("/getAllArchivedJobseekers", CheckComp,  async (req, res) => {
     try {
         let result = await DeletedJobSeeker.find({}, { Archived: 1, _id: 0,createdAt:1 })
         res.send(result)
@@ -632,7 +628,7 @@ router.get("/getAllArchivedJobseekers", async (req, res) => {
 
 // check archived full profile for admin
 
-router.get("/getDeletedProfile/:id",verifyToken, async (req, res) => {
+router.get("/getDeletedProfile/:id", verifyToken, async (req, res) => {
 
     try {
         let result = await DeletedJobSeeker
@@ -649,7 +645,7 @@ console.log(err)
     }
 })
 
-router.get("/getArchivedProfile/:id", async (req, res) => {
+router.get("/getArchivedProfile/:id", verifyToken, async (req, res) => {
 
     try {
         let result = await ArchivedJobSeeker.findOne(
@@ -794,7 +790,7 @@ router.get("/ArchiveJobseekerTagsIds/:id", async (req, res) => {
     let spliArray = comingArray.split(",")
     // console.log(spliArray)
     let arr=[ "67b5f59ed660de1cc80b6132", "67b60458d660de1cc80b6152" ]
-    
+
     try {   
         const objectIds = spliArray.map(id => new mongoose.Types.ObjectId(id));
         const profile = await ArchivedJobSeeker.aggregate([
@@ -824,7 +820,7 @@ router.get("/getLimitArchiveJobseeker/:limit", verifyHomeJobs, async(req, res)=>
     // console.log(limitValue)
     try{
        let result = await ArchivedJobSeeker.find({}, { Archived: 1, createdAt: 1})
-       
+
        .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
        res.send(result)
     }catch(err){
@@ -880,7 +876,7 @@ router.get("/getLimitDeletedJobseeker/:limit", verifyHomeJobs, async(req, res)=>
     // console.log(limitValue)
     try{
        let result = await DeletedJobSeeker.find({}, { Archived: 1, createdAt: 1})
-       
+
        .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
     //    console.log(result)
        res.send(result)
@@ -916,7 +912,7 @@ router.get("/DeletedJobSeekerTagsIds/:id", async (req, res) => {
     let spliArray = comingArray.split(",")
     // console.log(spliArray)
     let arr=[ "67b5f59ed660de1cc80b6132", "67b60458d660de1cc80b6152" ]
-    
+
     try {   
         const objectIds = spliArray.map(id => new mongoose.Types.ObjectId(id));
         const profile = await DeletedJobSeeker.aggregate([
@@ -1051,4 +1047,3 @@ module.exports = router
 //             res.send(err)
 //         }
 //     })
-
