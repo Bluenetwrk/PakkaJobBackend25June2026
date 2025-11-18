@@ -143,6 +143,7 @@ const profileSchema= new mongoose.Schema({
     }],
     achievements: [{String}],
     interests: [{String}],
+    projects:[{String}],
     tokenNo:[{
         tokenNo:{
         type:Number
