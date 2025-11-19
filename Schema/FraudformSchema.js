@@ -2,12 +2,14 @@ const mongoose = require("mongoose")
 
 const ReportFraud = new mongoose.Schema({
     misuseType:{
-
+        type:String
     },
     selectedOption:{
+        type: String
 
     },
     issues:{
+        type: String
 
      }
     //  ,
