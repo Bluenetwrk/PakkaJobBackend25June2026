@@ -137,13 +137,13 @@ const profileSchema= new mongoose.Schema({
         
     ],
     personalDetails:[{
-        gender: {String},
-        maritalStatus: {String},
-        dob: {Date}
+        gender: {type:String},
+        maritalStatus: {type:String},
+        dob: {type:Date}
     }],
-    achievements: [{String}],
-    interests: [{String}],
-    projects:[{String}],
+    achievements: [{type:String}],
+    interests: [{type:String}],
+    projects:[{type:String}],
     tokenNo:[{
         tokenNo:{
         type:Number
