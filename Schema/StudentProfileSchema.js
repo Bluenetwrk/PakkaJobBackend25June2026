@@ -87,10 +87,7 @@ const profileSchema= new mongoose.Schema({
     imageConsent:{
         type:Boolean
     },
-    internal:{
-        type:Boolean
-    },
-    external:{
+     external:{
         type:Boolean
     },
     ipAddress:{

@@ -162,7 +162,7 @@ router.get("/searchJob/:key", async(req,res)=>{
            {skills :{$regex:req.params.key}},
            {jobLocation:{$regex:req.params.key}},
            {companyName:{$regex:req.params.key}},
-           {internal:{$regex:req.params.key}}
+           {external:{$regex:req.params.key}}
     ]
     })
     if(result){
@@ -529,7 +529,7 @@ router.get("/getDeletedJobs", async(req, res)=>{
 router.post("/Careerjobpost", verifyToken, async (req, res) => {
     try {
         const {Logo, empId, companyName, jobTitle, jobDescription, jobtype, 
-            salaryRange, jobLocation, qualification, experiance, skills, internal } = (req.body)
+            salaryRange, jobLocation, qualification, experiance, skills, external } = (req.body)
         if ( !jobDescription || !companyName || !experiance || !jobLocation) {
             res.send("field are missing")
         } else {
