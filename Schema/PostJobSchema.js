@@ -56,6 +56,9 @@ experiance:{
 skills:[
     // type : String
  ] ,
+ external:{
+    type: Boolean
+ },
 jobSeekerId:[
     {
         jobSeekerId:{

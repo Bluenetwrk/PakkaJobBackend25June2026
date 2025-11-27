@@ -8,6 +8,12 @@ const userSchema = new mongoose.Schema({
         type: String,
 
     },
+    internal:{
+        type:Boolean
+    },
+    external:{
+        type: Boolean
+    }
     
 },
 {timestamps:true}

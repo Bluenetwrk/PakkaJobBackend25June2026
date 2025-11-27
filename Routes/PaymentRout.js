@@ -86,6 +86,10 @@ console.log(err)
 
 router.post("/phonePayPayment", async(req,res)=>{
   // console.log(req.body.amount)
+  const { userId, planId } = req.body;
+  const plan = await Plan.findById(planId);
+  const user = await User.findById(userId);
+
   const merchantTransactionId = 'MT7850590068188104'
 
   const data = {    

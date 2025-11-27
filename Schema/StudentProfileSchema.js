@@ -5,9 +5,29 @@ const profileSchema= new mongoose.Schema({
         type:String
         // type:Buffer
     },
-    Gpicture : { 
+    Plan:{
+        type:mongoose.Schema.Types.ObjectID,
+        ref:'consultationPlan'
+    },
+    subscriptionStatus: {
+    type: String,
+    enum: ['active', 'inactive', 'canceled'],
+    default: 'inactive',
+     },
+    paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid', 'failed'],
+    default: 'pending',
+   },
+    phonePeTxnId: {
         type:String
     },
+    CustomerId: {
+        type:String
+     },
+    Gpicture : { 
+        type:String
+     },
     userId: {
         type: String
     },
@@ -65,6 +85,12 @@ const profileSchema= new mongoose.Schema({
 
     },
     imageConsent:{
+        type:Boolean
+    },
+    internal:{
+        type:Boolean
+    },
+    external:{
         type:Boolean
     },
     ipAddress:{

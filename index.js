@@ -15,9 +15,11 @@ const EmployeeProfileModel = require("./Schema/EmpProfileSchema")
 const QuestionRoute=require("./Routes/AskQuestionRoutes")
 const WalkinPostRoutes = require("./Routes/WalkinPostRoutes");
 const reportFraudRoutes = require("./Routes/ReportFraudRoutes")
+const serviceRoutes  = require("./Routes/ServicesRoutes")
 // const AuthRoutes = require("./Routes/AuthRoute.js") 
 const passport = require('passport');
 const LinkedInStrategy = require('passport-linkedin-oauth2').Strategy;
+
 
 const port = 8080
 const { MongoClient } = require("mongodb")
@@ -74,6 +76,7 @@ app.use("/admin", adminRoutes)
 app.use("/paymentAPI", PaymentRoute)
 app.use("/ReportFraud", reportFraudRoutes)
 // app.use("/LinkedIn", AuthRoutes)
+app.use("/service", serviceRoutes)
 
 
 
