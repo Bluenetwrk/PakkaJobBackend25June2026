@@ -529,7 +529,7 @@ router.get("/getDeletedJobs", async(req, res)=>{
 router.post("/Careerjobpost", verifyToken, async (req, res) => {
     try {
         const {Logo, empId, companyName, jobTitle, jobDescription, jobtype, 
-            salaryRange, jobLocation, qualification, experiance, skills, external } = (req.body)
+            salaryRange, jobLocation, qualification, experiance, skills, external} = (req.body)
         if ( !jobDescription || !companyName || !experiance || !jobLocation) {
             res.send("field are missing")
         } else {
