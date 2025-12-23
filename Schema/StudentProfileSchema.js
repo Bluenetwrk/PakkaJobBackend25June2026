@@ -19,7 +19,7 @@ const profileSchema= new mongoose.Schema({
     enum: ['pending', 'paid', 'failed'],
     default: 'pending',
    },
-    phonePeTxnId: {
+   phonePeTxnId: {
         type:String
     },
     CustomerId: {
@@ -90,6 +90,12 @@ const profileSchema= new mongoose.Schema({
     external:{
         type:Boolean
     },
+    disclaimerConsent:{
+        type: Boolean
+    },
+    uploadConsent:{
+        type: Boolean
+    },
     ipAddress:{
         type:String
     },
@@ -129,7 +135,19 @@ const profileSchema= new mongoose.Schema({
         },
         countryCode:{
             type:String
-        }
+        },
+        studyField:{
+            type:String
+        },
+         yop:{
+            type:String
+        },
+        city:{
+            type:String
+        } ,
+        country:{
+            type:String
+         }
     }],
     Skills:{
         type:String
@@ -160,9 +178,24 @@ const profileSchema= new mongoose.Schema({
         
     ],
     personalDetails:[{
-        gender: {type:String},
-        maritalStatus: {type:String},
-        dob: {type:Date}
+        gender: {
+            type:String
+        },
+        maritalStatus: {
+            type:String
+        },
+        dob: {
+            type:Date
+        }, 
+        fatherName:{
+            type:String
+        },
+        motherName:{
+            type:String
+        },
+        Nationality:{
+            type:String
+        }
     }],
     achievements: [{type:String}],
     interests: [{type:String}],
@@ -176,6 +209,9 @@ const profileSchema= new mongoose.Schema({
         }    
     }
     ],
+    linkedin:{
+        type:String
+    },
     message:{
         type:String
     },
