@@ -212,6 +212,9 @@ const profileSchema= new mongoose.Schema({
     linkedin:{
         type:String
     },
+    objective:{
+        type: String
+    },
     message:{
         type:String
     },
