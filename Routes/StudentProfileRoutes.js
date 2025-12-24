@@ -50,38 +50,38 @@ const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'public/Images');
-    },
-    filename: function (req, file, cb) {
-        cb(null, uuidv4() + "_" + Date.now() + path.extname(file.originalname));
-    }
-});
+// const storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//         cb(null, 'public/Images');
+//     },
+//     filename: function (req, file, cb) {
+//         cb(null, uuidv4() + "_" + Date.now() + path.extname(file.originalname));
+//     }
+// });
 
-const upload = multer({ storage: storage });
+// const upload = multer({ storage: storage });
 
-router.put("/uploadImage/:id", upload.single('image'), async (req, res) => {
-    imagePath = req.file.filename
-    try {
-const binary = Buffer.from(imagePath)
-        let result = await StudentProfileModel.updateOne(
-            { _id: req.params.id },
-            // { $set: { image: `https://itwalkin-backend-testrelease-2-0-1-0824.onrender.com/Images/${imagePath}` } }
-            // { $set: { image: `http://localhost:8080/Images/${imagePath}` } }
-            { $set: { image: `https://itwalkin-backend-testrelease-2-0-1-0824-ns0g.onrender.com/Images/${imagePath}` } }
-            //    { $set: { image: `https://i-twalkin-backend-testrelease-2-0-1-0824.vercel.app/Images/${imagePath}`}}
-// { $set: { image: binary } }
+// router.put("/uploadImage/:id", upload.single('image'), async (req, res) => {
+//     imagePath = req.file.filename
+//     try {
+// const binary = Buffer.from(imagePath)
+//         let result = await StudentProfileModel.updateOne(
+//             { _id: req.params.id },
+//             // { $set: { image: `https://itwalkin-backend-testrelease-2-0-1-0824.onrender.com/Images/${imagePath}` } }
+//             // { $set: { image: `http://localhost:8080/Images/${imagePath}` } }
+//             { $set: { image: `https://itwalkin-backend-testrelease-2-0-1-0824-ns0g.onrender.com/Images/${imagePath}` } }
+//             //    { $set: { image: `https://i-twalkin-backend-testrelease-2-0-1-0824.vercel.app/Images/${imagePath}`}}
+// // { $set: { image: binary } }
 
-        )
+//         )
 
-        if (result) {
-            res.send(result)
-        }
-    } catch (err) {
-        res.send("back error occured")
-    }
-})
+//         if (result) {
+//             res.send(result)
+//         }
+//     } catch (err) {
+//         res.send("back error occured")
+//     }
+// })
 router.post("/saveToken",verifyToken, async (req, res) => {
     try {
         let jobs = new StudentProfileModel(req.body)
@@ -932,6 +932,31 @@ router.get("/DeletedJobSeekerTagsIds/:id", async (req, res) => {
         res.send("server error occured")
         console.log(err)
     }
+})
+//youtube video upload
+const storage = multer.diskStorage({  
+ destination: function (req, file, cb) {  
+ cb(null, "uploads/"); // folder must exist  
+ },  
+ filename: function (req, file, cb) {  
+ cb(null, Date.now() + "-" + file.originalname);  
+ }  
+});  
+const upload = multer({ storage });  
+// API Endpoint  
+router.post("/uploadToYouTube", upload.single("video"), async (req, res) => {  
+ try {  
+ if (!req.file) {  
+ return res.status(400).json({ error: "No video uploaded" });
+   
+ const videoPath = req.file.path;  
+ const videoUrl = await uploadToYoutube(videoPath);  
+ res.json({ url: videoUrl });  
+ }} catch (error) {  
+ console.error("UPLOAD ERROR:", error);  
+ res.status(500).json({ error: "Upload failed" });  
+ }  
+
 })
 
 

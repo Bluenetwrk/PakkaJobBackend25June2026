@@ -19,6 +19,7 @@ const serviceRoutes  = require("./Routes/ServicesRoutes")
 // const AuthRoutes = require("./Routes/AuthRoute.js") 
 const passport = require('passport');
 const LinkedInStrategy = require('passport-linkedin-oauth2').Strategy;
+const uploadToYouTube = require("./Routes/uploadToYoutube")
 
 
 const port = 8080
@@ -77,6 +78,7 @@ app.use("/paymentAPI", PaymentRoute)
 app.use("/ReportFraud", reportFraudRoutes)
 // app.use("/LinkedIn", AuthRoutes)
 app.use("/service", serviceRoutes)
+app.use("/uploadToYoutube",uploadToYouTube)
 
 
 
