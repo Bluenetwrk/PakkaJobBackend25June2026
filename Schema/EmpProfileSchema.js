@@ -47,7 +47,7 @@ const profileSchema= new mongoose.Schema({
     },
     Secondaryuseremailid:{
         type: String,
-        unique: true
+       // unique: true
     },
     Secondaryusercontactnumber:{
         type:String
