@@ -21,6 +21,7 @@ const passport = require('passport');
 const LinkedInStrategy = require('passport-linkedin-oauth2').Strategy;
 const uploadToYouTube = require("./Routes/uploadToYoutube")
 const CSRoutes = require("./Routes/CS_Routes")
+const CSProfileModel = require("./Schema/CS_Schema")
 
 
 
