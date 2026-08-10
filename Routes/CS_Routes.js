@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const router = express.Router();
 const CSProfileModel= require("../Schema/CS_Schema")
-const StudentProfileModel = require("../Schema/StudentProfileSchema")
+// const StudentProfileModel = require("../Schema/StudentProfileSchema")
 const ArchiveEmployee= require("../Schema/ArchivedEmployee")
 const NewCSProfileRegistrationModel= require("../Schema/CSNewRegistrationSchema")
 const bcrypt = require("bcrypt")
@@ -221,9 +221,9 @@ router.post("/Userlogin", async (req, res) => {
     try {
     let { CSId, gtoken, jobseeker_email,jobseeker_name,email,jobseeker_phone,created_date, resume_type,created_resume,name, isApproved, ipAddress } = (req.body)
 
-        let user = await StudentProfileModel.findOne({ jobseeker_email: jobseeker_email });
+        let user = await CSProfileModel.findOne({ jobseeker_email: jobseeker_email });
         if (user == null) {
-        const user = await new StudentProfileModel(req.body)
+        const user = await new CSProfileModel(req.body)
         // const user = await new CSProfileModel({ email: email, name: name,  userId : userId, 
         //     isApproved:isApproved, ipAddress:ipAddress})
         const result = await user.save(user)                     
