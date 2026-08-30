@@ -58,13 +58,30 @@ const profileSchema= new mongoose.Schema({
     CompanyName:{
         type:String
     },
+
     CompanyContact:{
         type:String
     },
     CompanyWebsite :{
         type:String
     },
-    CompanyAddress:{
+    CompanyAddress1 :{
+        type:String
+    },
+    CompanyAddress2 :{
+        type:String
+    },
+    
+    City:{
+        type:String
+    },
+    postalCode:{
+        type:String
+    },
+    placeId:{
+        type:String
+    },
+    googlemapsUrl:{
         type:String
     },
     CompanyEmail:{
