@@ -96,6 +96,9 @@ const profileSchema= new mongoose.Schema({
     isApproved:{
         type:Boolean
     },
+    hasBuisnessAccount:{
+        type:Boolean
+    },
     isReject:{
         type:Boolean
     },
