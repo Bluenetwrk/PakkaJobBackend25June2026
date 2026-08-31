@@ -201,7 +201,7 @@ var transporter = nodemailer.createTransport({
     }
   });
   let gtoken = jwt.sign({id:result._id},secretKey)
-            res.send({status : "success" ,token : gtoken ,id: result._id ,action:"registered"
+            res.send({status : "success" ,token : gtoken ,id: result._id ,action:"registration"
                 })
         } else {   
             let Nowtime = Date()  
