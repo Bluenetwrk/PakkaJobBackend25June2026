@@ -211,7 +211,8 @@ var transporter = nodemailer.createTransport({
                {$set:req.body}
             )
             let gtoken = jwt.sign({id:user._id},secretKey)
-            res.send({status : "success" ,token : gtoken ,id: user._id, isApproved: user.isApproved, action:"login"})
+            res.send({status : "success" ,token : gtoken ,id: user._id,
+                hasBuisnessAccount:user.hasBuisnessAccount, isApproved: user.isApproved, action:"login"})
         }
     } catch (err) {
         res.send(err)
