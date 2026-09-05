@@ -4,13 +4,13 @@ dotenv.config();
 
 function dbconnection() {
   // 1. Matches your new Render Dashboard Key
-  mongoose.connect(process.env.MONGO_URL)
+  mongoose.connect(process.env.URL)
     .then((res) => { 
-      console.log("🚀 Live MongoDB connected successfully!"); 
+      console.log("connected"); 
     })
     .catch((err) => { 
       // 2. Prints the real error text in Render Logs if it fails
-      console.error("❌ MongoDB connection failed:", err.message); 
+      console.error("failed:", err.message); 
     });
 }
 

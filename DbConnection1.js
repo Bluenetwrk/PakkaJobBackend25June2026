@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const port = 8080
 const dotenv = require("dotenv");
 dotenv.config();
 function dbconnection(){
