@@ -3,6 +3,8 @@ const router = express.Router();
 const StudentProfileModel = require("../Schema/StudentProfileSchema")
 const DeletedJobSeeker = require("../Schema/deletedJobSeeker")
 const ArchivedJobSeeker = require("../Schema/ArchivedJobSeeker")
+const { Resend } = require("resend")
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const bcrypt = require("bcrypt")
 const { body, validationResult } = require("express-validator")
@@ -10,8 +12,8 @@ const jwt = require("jsonwebtoken")
 const secretKey = "abcde";
 var nodemailer = require('nodemailer');
 // const importverifyToken = require('./JobpostsRoutes')
-const Archived= require("../Schema/ArchiveJobsAchema")
-const Deleted= require("../Schema/DeletedJobsSchema")
+const Archived = require("../Schema/ArchiveJobsAchema")
+const Deleted = require("../Schema/DeletedJobsSchema")
 const fs = require('fs')
 const mongoose = require("mongoose");
 
@@ -37,13 +39,13 @@ function verifyToken(req, res, next) {
     }
 }
 
-function verifyHomeJobs(req, res, next){
-    let valid=req.headers['authorization']
-    if(valid==='BlueItImpulseWalkinIn'){
+function verifyHomeJobs(req, res, next) {
+    let valid = req.headers['authorization']
+    if (valid === 'BlueItImpulseWalkinIn') {
         next()
-}else{
-    res.send("Unauthorised Access")
-}
+    } else {
+        res.send("Unauthorised Access")
+    }
 }
 
 const multer = require('multer');
@@ -82,16 +84,16 @@ const path = require('path');
 //         res.send("back error occured")
 //     }
 // })
-router.post("/saveToken",verifyToken, async (req, res) => {
+router.post("/saveToken", verifyToken, async (req, res) => {
     try {
         let jobs = new StudentProfileModel(req.body)
         let result = await jobs.save()
         res.send("success")
 
-} catch (error) {
-    // console.log(error.message)
-    res.send("server issue ")
-}
+    } catch (error) {
+        // console.log(error.message)
+        res.send("server issue ")
+    }
 })
 
 // delete image for studentProfile....
@@ -200,7 +202,7 @@ router.post("/Glogin", body('email').isEmail(), async (req, res) => {
         }
         let user = await StudentProfileModel.findOne({ email: email });
         if (user == null) {
-            const user = await new StudentProfileModel({ userId: userId, email: email, Gpicture: Gpicture, name: name, isApproved: isApproved, ipAddress: ipAddress})
+            const user = await new StudentProfileModel({ userId: userId, email: email, Gpicture: Gpicture, name: name, isApproved: isApproved, ipAddress: ipAddress })
             const result = await user.save(user)
 
             var transporter = nodemailer.createTransport({
@@ -223,22 +225,190 @@ router.post("/Glogin", body('email').isEmail(), async (req, res) => {
                 }
             });
             let gtoken = jwt.sign({ id: result._id }, secretKey)
-            res.send({ status: "success", token: gtoken, id: result._id , action:"registered"})
+            res.send({ status: "success", token: gtoken, id: result._id, action: "registered" })
         } else {
-            let Nowtime = Date()  
+            let Nowtime = Date()
             let result = await StudentProfileModel.updateOne(
-                {_id: user._id},
-               {$set: {LogedInTime:Nowtime, Gpicture: Gpicture}},
-               {$set:req.body}
+                { _id: user._id },
+                { $set: { LogedInTime: Nowtime, Gpicture: Gpicture } },
+                { $set: req.body }
             )
             let gtoken = jwt.sign({ id: user._id }, secretKey)
-            res.send({ status: "success", token: gtoken, id: user._id, action:"login" })
+            res.send({ status: "success", token: gtoken, id: user._id, action: "login" })
         }
 
     } catch (err) {
         res.send("backend error")
     }
 })
+// ............regFromResume......................
+router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
+    try {
+        let { email } = (req.body.jobseekerForm)
+        const url = process.env.BACKEND_URL || "http://localhost:8080";
+        const error = validationResult(email)
+        if (!error.isEmpty()) {
+            return res.send("invalid email")
+        }
+        let user = await StudentProfileModel.findOne({ email: email });
+        if (user == null) {
+            const user = await new StudentProfileModel({ email: email })
+            const result = await user.save(user)
+            let token = jwt.sign({ id: result._id }, secretKey)
+
+            //welcome mail...............................
+            const verificationLink = `${url}/StudentProfile/verifymail?token=${token}`;
+
+            const { data, error } = await resend.emails.send({
+                from: "PakkaJob <noreply@pakkajob.in>",
+                to: user.email,
+                subject: "Welcome to PakkaJob 🎉",
+                html: `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 30px;">
+      
+      <h2 style="color: #2563eb;">
+        Welcome to PakkaJob! 🎉
+      </h2>
+
+      <p>Hi ${user.name || "there"},</p>
+
+      <p>
+        Welcome to <strong>PakkaJob</strong>! We're excited to have you join us.
+      </p>
+
+      <p>
+        Your account has been created successfully. To get started, 
+        please verify your email address by clicking the button below.
+      </p>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a
+          href="${verificationLink}"
+          style="
+            background-color: #2563eb;
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+          "
+        >
+          Verify My Email
+        </a>
+      </div>
+
+      <p>
+        Once your email is verified, you can start exploring job opportunities
+        and build your profile on PakkaJob.
+      </p>
+
+      <p>
+        If you didn't create this account, you can safely ignore this email.
+      </p>
+
+      <p>
+        Best regards,<br>
+        <strong>PakkaJob Team</strong>
+      </p>
+
+    </div>
+  `
+            });
+            if (err) {
+                res.send({message:"mail not sent"})
+            }
+                res.send({message:"mail was sent successfully", id:result._id})
+
+        } else {
+            let token = jwt.sign({ id: user._id }, secretKey)
+
+            const verificationLink = `${url}/StudentProfile/verifymail?token=${token}`;
+            const { data, error } = await resend.emails.send({
+                from: "PakkaJob <noreply@pakkajob.in>",
+                to: user.email,
+                subject: "verify your mail",
+                html: `
+                  <p>Please confirm your email address by clicking the button below:</p>
+        <a 
+          href="${verificationLink}"
+          style="
+            display:inline-block;
+            padding:12px 20px;
+            background:#007bff;
+            color:white;
+            text-decoration:none;
+            border-radius:5px;">
+          Confirm Email
+        </a>
+        <p>This link will verify your account.</p>`
+            });
+            if (error) {
+                res.send({message:"mail not sent"})
+            } else {
+                res.send({message:"mail was sent successfully", id: user._id})
+            }
+        }
+    } catch (err) {
+        res.send("backend error")
+    }
+})
+
+router.get("/verifymail", async (req, res) => {
+    try {
+        const { token } = req.query;
+        if (!token) {
+            return res.status(400).send("Verification token is required");
+        }
+        jwt.verify(token, secretKey, async (err, valid) => {
+            if (err) {
+                res.send("invalid token")
+            } else {
+                let id = valid.id
+                const result = await StudentProfileModel.updateOne(
+                    { _id: id },
+                    { $set: { isEditEnable: true } }
+                );
+            }
+        })
+
+        return res.status(200).send("Email verified successfully!");
+
+    } catch (error) {
+        console.log(error)
+        if (error.name === "TokenExpiredError") {
+            return res.status(400).send("Verification link has expired");
+        }
+        return res.status(400).send("Invalid verification link");
+    }
+});
+
+router.get("/checkEditEnable/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const user = await StudentProfileModel.findOne(
+            { _id:id },
+            { isEditEnable: true }
+        );
+        if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    res.json({
+      isEditEnable: user.isEditEnable
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: "Something went wrong"
+    });
+  }
+});
+
+
 // Login with LinkedIn
 // app.get('/auth/linkedin/callback', async (req, res) => {
 //     const code = req.query.code;
@@ -284,6 +454,7 @@ router.get("/viewProfile/:id", async (req, res) => {
 
     } catch (err) {
         res.send("back end error occured")
+        console.log(err)
     }
 })
 
@@ -312,43 +483,43 @@ router.post("/loginforAdmin", body('email').isEmail(), async (req, res) => {
 // .....update full student profile...........
 router.put("/updatProfile/:id", verifyToken, async (req, res) => {
     try {
-      const { tokenNo, HRsEmployerFeedBack, interview, ...rest } = req.body;
+        const { tokenNo, HRsEmployerFeedBack, interview, ...rest } = req.body;
 
-      const updateFields = {
-        $set: rest,
-      };
+        const updateFields = {
+            $set: rest,
+        };
 
-      // Add to arrays only if values are provided
-      if (tokenNo || HRsEmployerFeedBack || interview) {
-        updateFields.$addToSet = {};
-        if (tokenNo) updateFields.$addToSet.tokenNo = tokenNo;
-        if (HRsEmployerFeedBack) updateFields.$addToSet.HRsEmployerFeedBack = HRsEmployerFeedBack;
-        if (interview) updateFields.$addToSet.interview = interview;
-      }
+        // Add to arrays only if values are provided
+        if (tokenNo || HRsEmployerFeedBack || interview) {
+            updateFields.$addToSet = {};
+            if (tokenNo) updateFields.$addToSet.tokenNo = tokenNo;
+            if (HRsEmployerFeedBack) updateFields.$addToSet.HRsEmployerFeedBack = HRsEmployerFeedBack;
+            if (interview) updateFields.$addToSet.interview = interview;
+        }
 
-      const result = await StudentProfileModel.updateOne(
-        { _id: req.params.id },
-        updateFields
-      );
+        const result = await StudentProfileModel.updateOne(
+            { _id: req.params.id },
+            updateFields
+        );
 
-      if (result.modifiedCount > 0) {
-        res.send("success");
-      } else {
-        res.status(404).send("No document updated");
-      }
+        if (result.modifiedCount > 0) {
+            res.send("success");
+        } else {
+            res.status(404).send("No document updated");
+        }
     } catch (err) {
-      console.error(err);
-      res.status(500).send("Backend error occurred");
+        console.error(err);
+        res.status(500).send("Backend error occurred");
     }
-  });
+});
 // authentic for logout jobseeker
-function CheckComp(req, res, next){
-    let valid=req.headers['authorization']
-    if(valid==='BlueItImpulseWalkinIn'){
+function CheckComp(req, res, next) {
+    let valid = req.headers['authorization']
+    if (valid === 'BlueItImpulseWalkinIn') {
         next()
-}else{
-    res.send("Unauthorised Access")
-}
+    } else {
+        res.send("Unauthorised Access")
+    }
 }
 
 
@@ -552,28 +723,15 @@ router.get("/getAllemail", verifyToken, async (req, res) => {
 //  get RecentLogin Employee foradmin
 let today = new Date();
 Date.prototype.subtractDays = function (d) {
-    this.setTime(this.getTime() 
+    this.setTime(this.getTime()
         - (d * 24 * 60 * 60 * 1000));
     return this;
-    }
+}
 let a = new Date();
 a.subtractDays(100);
-router.get("/RecentLogin", verifyToken, async(req, res)=>{
-    try{
-        let result = await StudentProfileModel.find({ LogedInTime: {$gte:a , $lte:today} })
-        if(result){
-            res.send(result)
-        }
-    }catch(err){
-    res.send("backend Error Occured")
-    }
-})
-
-// find all Online for admin
-router.get("/checkOnline", verifyToken, async (req, res) => {
+router.get("/RecentLogin", verifyToken, async (req, res) => {
     try {
-        // let result = await StudentProfileModel.aggregate([{ $match: { isApproved: false } }])
-        let result = await StudentProfileModel.aggregate([{$match:{online:true}}])
+        let result = await StudentProfileModel.find({ LogedInTime: { $gte: a, $lte: today } })
         if (result) {
             res.send(result)
         }
@@ -582,44 +740,58 @@ router.get("/checkOnline", verifyToken, async (req, res) => {
     }
 })
 
-router.get("/getSkillTags/:name", async(req, res)=>{
+// find all Online for admin
+router.get("/checkOnline", verifyToken, async (req, res) => {
+    try {
+        // let result = await StudentProfileModel.aggregate([{ $match: { isApproved: false } }])
+        let result = await StudentProfileModel.aggregate([{ $match: { online: true } }])
+        if (result) {
+            res.send(result)
+        }
+    } catch (err) {
+        res.send("backend Error Occured")
+    }
+})
 
-try{
-    let result = await StudentProfileModel.find({Tags: {$elemMatch: {value: req.params.name,label: req.params.name }}
-    })
-       res.send(result)
-    }catch(err){
+router.get("/getSkillTags/:name", async (req, res) => {
+
+    try {
+        let result = await StudentProfileModel.find({
+            Tags: { $elemMatch: { value: req.params.name, label: req.params.name } }
+        })
+        res.send(result)
+    } catch (err) {
         res.send("server error")
     }
 })
 
 // get  Job Seeker jobLocation  
-router.get("/getStuLocation/:locationName", async(req, res)=>{
-    try{
-        let result = await StudentProfileModel.aggregate([{$match:{city:req.params.locationName}}])
-        if(result){
+router.get("/getStuLocation/:locationName", async (req, res) => {
+    try {
+        let result = await StudentProfileModel.aggregate([{ $match: { city: req.params.locationName } }])
+        if (result) {
             res.send(result)
         }
-    }catch(err){
+    } catch (err) {
         res.send("backend error ")
     }
 })
 
 // ....delete JobSeeker Profile ....
 router.delete("/deleteJobSeeker/:id", async (req, res) => {
-    try{
-    const Archived = await StudentProfileModel.findByIdAndDelete({ _id: req.params.id })
-    const user = await new DeletedJobSeeker({Archived:Archived})
+    try {
+        const Archived = await StudentProfileModel.findByIdAndDelete({ _id: req.params.id })
+        const user = await new DeletedJobSeeker({ Archived: Archived })
         const resu = await user.save()
         res.send("success")
-    }catch(err){
+    } catch (err) {
         res.send("error")
     }
 })
 // archived Job seeker for admin
-router.get("/getAllArchivedJobseekers", CheckComp,  async (req, res) => {
+router.get("/getAllArchivedJobseekers", CheckComp, async (req, res) => {
     try {
-        let result = await DeletedJobSeeker.find({}, { Archived: 1, _id: 0,createdAt:1 })
+        let result = await DeletedJobSeeker.find({}, { Archived: 1, _id: 0, createdAt: 1 })
         res.send(result)
     } catch (err) {
         res.send("backend error occured")
@@ -632,15 +804,15 @@ router.get("/getDeletedProfile/:id", verifyToken, async (req, res) => {
 
     try {
         let result = await DeletedJobSeeker
-        .findOne(
-            { "Archived._id": new mongoose.Types.ObjectId(req.params.id) }
-          );
+            .findOne(
+                { "Archived._id": new mongoose.Types.ObjectId(req.params.id) }
+            );
         if (result) {
-            res.send( result )
+            res.send(result)
         }
     } catch (err) {
         res.send("back end error occured")
-console.log(err)
+        console.log(err)
 
     }
 })
@@ -651,32 +823,32 @@ router.get("/getArchivedProfile/:id", verifyToken, async (req, res) => {
         let result = await ArchivedJobSeeker.findOne(
             { "Archived._id": new mongoose.Types.ObjectId(req.params.id) },
             { "Archived.$": 1 }
-          );
+        );
         if (result) {
-            res.send( result )
+            res.send(result)
         }
         // console.log(result)
     } catch (err) {
         res.send("back end error occured")
-console.log(err)
+        console.log(err)
 
     }
 })
 
 
-router.get("/getTagsJobs/:name", async(req, res)=>{
-    let comingParam=req.params.name
-    let convertingArray=comingParam.split(",")
+router.get("/getTagsJobs/:name", async (req, res) => {
+    let comingParam = req.params.name
+    let convertingArray = comingParam.split(",")
     // console.log(convertingArray)
-    try{
+    try {
         let result = await StudentProfileModel.aggregate([
             // {$match:{Tags:req.params.name}},
-            {$match:{Tags:{$in:convertingArray}}},
+            { $match: { Tags: { $in: convertingArray } } },
             { $project: { _id: 1, createdAt: 1 } }
         ])
-    // console.log(result)
-    res.send(result)
-    }catch(err){
+        // console.log(result)
+        res.send(result)
+    } catch (err) {
         res.send("server error")
         console.log(err)
     }
@@ -693,10 +865,10 @@ router.get("/jobTagsIds/:id", async (req, res) => {
     try {
         // console.log("local value",['6533629f105bb11463d44bb4', '652f76a8eff06fe23539e03d','652f73966749e34e868567e1'])
         const profile = await StudentProfileModel.find({ _id: { $in: spliArray } })
-        .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
+            .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
         if (profile) {
             res.send(profile)
-    // console.log(profile)
+            // console.log(profile)
 
         } else {
             res.send("not found")
@@ -709,73 +881,73 @@ router.get("/jobTagsIds/:id", async (req, res) => {
 })
 
 //  pagination , get Limited jobs (never used API)
-router.get("/getLimitJobs/:limit", verifyHomeJobs, async(req, res)=>{
+router.get("/getLimitJobs/:limit", verifyHomeJobs, async (req, res) => {
     let limitValue = (parseInt(req.params.limit))
     let page = (parseInt(req.query.currentPage))
     // console.log(page)
     // console.log(limitValue)
-    try{
-       let result = await StudentProfileModel.find().sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
-       res.send(result)
-    }catch(err){
+    try {
+        let result = await StudentProfileModel.find().sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
+        res.send(result)
+    } catch (err) {
         res.send("server error")
     }
 })
 
-router.get("/getTotalCount", async(req, res)=>{
-    try{
-       let result =await StudentProfileModel.estimatedDocumentCount()
-    //    console.log(result)
-       res.status(200).send({"result":result})
-    }catch(err){
-       res.status(401).send({"result":"server issue"})
+router.get("/getTotalCount", async (req, res) => {
+    try {
+        let result = await StudentProfileModel.estimatedDocumentCount()
+        //    console.log(result)
+        res.status(200).send({ "result": result })
+    } catch (err) {
+        res.status(401).send({ "result": "server issue" })
     }
 })
 
-router.delete("/ArchiveCheckBoxArray/:ids", verifyToken, async(req, res)=>{
+router.delete("/ArchiveCheckBoxArray/:ids", verifyToken, async (req, res) => {
     let comingIds = req.params.ids.split(",")
-    try{        
+    try {
 
-        let foundJobs=await StudentProfileModel.find({_id:{$in:comingIds}})
+        let foundJobs = await StudentProfileModel.find({ _id: { $in: comingIds } })
 
         if (foundJobs.length > 0) {
-            let archiveJobs=foundJobs.map((jobs)=>{
-                return(
+            let archiveJobs = foundJobs.map((jobs) => {
+                return (
                     jobs
                 )
             })
-           let insertedValue= await ArchivedJobSeeker.insertMany({Archived:archiveJobs});
-        let deletedJobs=await StudentProfileModel.deleteMany({_id:{$in:comingIds}})
+            let insertedValue = await ArchivedJobSeeker.insertMany({ Archived: archiveJobs });
+            let deletedJobs = await StudentProfileModel.deleteMany({ _id: { $in: comingIds } })
         }
-res.send("success")
-    }catch(err){
-res.send("fail")
+        res.send("success")
+    } catch (err) {
+        res.send("fail")
     }
 })
 
-router.get("/getArchiveJobs", async(req, res)=>{
-    try{
-        let result =await ArchivedJobSeeker.find({}, { Archived: 1, createdAt: 1})
+router.get("/getArchiveJobs", async (req, res) => {
+    try {
+        let result = await ArchivedJobSeeker.find({}, { Archived: 1, createdAt: 1 })
         res.send(result)
-    }catch(err){
+    } catch (err) {
         console.log("error")
         res.send("error")
     }
 })
 
-router.get("/getTagsArchiveJobseekers/:name", async(req, res)=>{
-    let comingParam=req.params.name
-    let convertingArray=comingParam.split(",") // ["javascript", "react", "nodejs"]
+router.get("/getTagsArchiveJobseekers/:name", async (req, res) => {
+    let comingParam = req.params.name
+    let convertingArray = comingParam.split(",") // ["javascript", "react", "nodejs"]
     // console.log("686",convertingArray)
-    try{
+    try {
         const result = await ArchivedJobSeeker.aggregate([
             { $unwind: "$Archived" },
-            {$match:{"Archived.Tags":{$in:convertingArray}}},
+            { $match: { "Archived.Tags": { $in: convertingArray } } },
             { $project: { _id: 1, "Archived._id": 1, createdAt: 1 } }
-          ]);
-// console.log(result);
-    res.send(result) // only id's will be shared
-    }catch(err){
+        ]);
+        // console.log(result);
+        res.send(result) // only id's will be shared
+    } catch (err) {
         res.send("server error")
         console.log(err)
     }
@@ -789,18 +961,18 @@ router.get("/ArchiveJobseekerTagsIds/:id", async (req, res) => {
     let comingArray = req.params.id
     let spliArray = comingArray.split(",")
     // console.log(spliArray)
-    let arr=[ "67b5f59ed660de1cc80b6132", "67b60458d660de1cc80b6152" ]
+    let arr = ["67b5f59ed660de1cc80b6132", "67b60458d660de1cc80b6152"]
 
-    try {   
+    try {
         const objectIds = spliArray.map(id => new mongoose.Types.ObjectId(id));
         const profile = await ArchivedJobSeeker.aggregate([
             { $unwind: "$Archived" }, // Flatten the Archived array
             { $match: { "Archived._id": { $in: objectIds } } }, // Match the IDs inside Archived
-        ])   
-        .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
+        ])
+            .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
         if (profile) {
             res.send(profile)
-    // console.log(profile)
+            // console.log(profile)
 
         } else {
             res.send("not found")
@@ -813,91 +985,91 @@ router.get("/ArchiveJobseekerTagsIds/:id", async (req, res) => {
 })
 
 //  pagination , get Limited jobs
-router.get("/getLimitArchiveJobseeker/:limit", verifyHomeJobs, async(req, res)=>{
+router.get("/getLimitArchiveJobseeker/:limit", verifyHomeJobs, async (req, res) => {
     let limitValue = (parseInt(req.params.limit))
     let page = (parseInt(req.query.currentPage))
     // console.log(page)
     // console.log(limitValue)
-    try{
-       let result = await ArchivedJobSeeker.find({}, { Archived: 1, createdAt: 1})
+    try {
+        let result = await ArchivedJobSeeker.find({}, { Archived: 1, createdAt: 1 })
 
-       .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
-       res.send(result)
-    }catch(err){
+            .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
+        res.send(result)
+    } catch (err) {
         res.send("server error")
     }
 })
 
-router.get("/getTotalCountArchiveJobseeker", async(req, res)=>{
-    try{
-    //    let result =await ArchivedJobSeeker.estimatedDocumentCount()
-       let response = await ArchivedJobSeeker.aggregate([
-        {
-          $group: {
-            _id: null,
-            totalArchivedLength: { $sum: { $size: "$Archived" } }
-          }
-        }
-      ])
-      let result
-     response.map((item)=>{
-        return(
-            result= item.totalArchivedLength
-        )
-     })
-    //  console.log(result)
+router.get("/getTotalCountArchiveJobseeker", async (req, res) => {
+    try {
+        //    let result =await ArchivedJobSeeker.estimatedDocumentCount()
+        let response = await ArchivedJobSeeker.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    totalArchivedLength: { $sum: { $size: "$Archived" } }
+                }
+            }
+        ])
+        let result
+        response.map((item) => {
+            return (
+                result = item.totalArchivedLength
+            )
+        })
+        //  console.log(result)
 
-       res.status(200).send({"result":result})
-    }catch(err){
-       res.status(401).send({"result":"server issue"})
-       console.log(err)
+        res.status(200).send({ "result": result })
+    } catch (err) {
+        res.status(401).send({ "result": "server issue" })
+        console.log(err)
 
     }
 })
 
 // ... for deleted for Jobseeker
-router.get("/getTotalCountDeletedJobSeeker", async(req, res)=>{
-    try{
-    //    let result =await ArchivedJobSeeker.estimatedDocumentCount()
-    let result =await DeletedJobSeeker.estimatedDocumentCount()
-    //    console.log(result)
-       res.status(200).send({"result":result})
-    }catch(err){
-       res.status(401).send({"result":"server issue"})
-       console.log(err)
+router.get("/getTotalCountDeletedJobSeeker", async (req, res) => {
+    try {
+        //    let result =await ArchivedJobSeeker.estimatedDocumentCount()
+        let result = await DeletedJobSeeker.estimatedDocumentCount()
+        //    console.log(result)
+        res.status(200).send({ "result": result })
+    } catch (err) {
+        res.status(401).send({ "result": "server issue" })
+        console.log(err)
 
     }
 })
 
 //  pagination , get Limited jobs
-router.get("/getLimitDeletedJobseeker/:limit", verifyHomeJobs, async(req, res)=>{
+router.get("/getLimitDeletedJobseeker/:limit", verifyHomeJobs, async (req, res) => {
     let limitValue = (parseInt(req.params.limit))
     let page = (parseInt(req.query.currentPage))
     // console.log(limitValue)
-    try{
-       let result = await DeletedJobSeeker.find({}, { Archived: 1, createdAt: 1})
+    try {
+        let result = await DeletedJobSeeker.find({}, { Archived: 1, createdAt: 1 })
 
-       .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
-    //    console.log(result)
-       res.send(result)
-    }catch(err){
+            .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
+        //    console.log(result)
+        res.send(result)
+    } catch (err) {
         res.send("server error")
     }
 })
 
 
-router.get("/getTagsDeletedJobSeeker/:name", async(req, res)=>{
-    let comingParam=req.params.name
-    let convertingArray=comingParam.split(",") // ["javascript", "react", "nodejs"]
+router.get("/getTagsDeletedJobSeeker/:name", async (req, res) => {
+    let comingParam = req.params.name
+    let convertingArray = comingParam.split(",") // ["javascript", "react", "nodejs"]
     // console.log("686",convertingArray)
-    try{
+    try {
         const result = await DeletedJobSeeker.aggregate([
-            {$match:{"Archived.Tags":{$in:convertingArray}}},
+            { $match: { "Archived.Tags": { $in: convertingArray } } },
             { $project: { _id: 1, "Archived._id": 1, createdAt: 1 } }
-          ]);
-// console.log("816",result);
-    res.send(result) // only id's will be shared
-    }catch(err){
+        ]);
+        // console.log("816",result);
+        res.send(result) // only id's will be shared
+    } catch (err) {
         res.send("server error")
         console.log(err)
     }
@@ -911,18 +1083,18 @@ router.get("/DeletedJobSeekerTagsIds/:id", async (req, res) => {
     let comingArray = req.params.id
     let spliArray = comingArray.split(",")
     // console.log(spliArray)
-    let arr=[ "67b5f59ed660de1cc80b6132", "67b60458d660de1cc80b6152" ]
+    let arr = ["67b5f59ed660de1cc80b6132", "67b60458d660de1cc80b6152"]
 
-    try {   
+    try {
         const objectIds = spliArray.map(id => new mongoose.Types.ObjectId(id));
         const profile = await DeletedJobSeeker.aggregate([
             { $unwind: "$Archived" }, // Flatten the Archived array
             { $match: { "Archived._id": { $in: objectIds } } }, // Match the IDs inside Archived
-        ])   
-        .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
+        ])
+            .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
         if (profile) {
             res.send(profile)
-    // console.log("843",profile)
+            // console.log("843",profile)
 
         } else {
             res.send("not found")
@@ -934,28 +1106,29 @@ router.get("/DeletedJobSeekerTagsIds/:id", async (req, res) => {
     }
 })
 //youtube video upload
-const storage = multer.diskStorage({  
- destination: function (req, file, cb) {  
- cb(null, "uploads/"); // folder must exist  
- },  
- filename: function (req, file, cb) {  
- cb(null, Date.now() + "-" + file.originalname);  
- }  
-});  
-const upload = multer({ storage });  
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, "uploads/"); // folder must exist  
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + "-" + file.originalname);
+    }
+});
+const upload = multer({ storage });
 // API Endpoint  
-router.post("/uploadToYouTube", upload.single("video"), async (req, res) => {  
- try {  
- if (!req.file) {  
- return res.status(400).json({ error: "No video uploaded" });
-   
- const videoPath = req.file.path;  
- const videoUrl = await uploadToYoutube(videoPath);  
- res.json({ url: videoUrl });  
- }} catch (error) {  
- console.error("UPLOAD ERROR:", error);  
- res.status(500).json({ error: "Upload failed" });  
- }  
+router.post("/uploadToYouTube", upload.single("video"), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: "No video uploaded" });
+
+            const videoPath = req.file.path;
+            const videoUrl = await uploadToYoutube(videoPath);
+            res.json({ url: videoUrl });
+        }
+    } catch (error) {
+        console.error("UPLOAD ERROR:", error);
+        res.status(500).json({ error: "Upload failed" });
+    }
 
 })
 

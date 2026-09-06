@@ -1,274 +1,278 @@
 const mongoose = require("mongoose")
 
-const profileSchema= new mongoose.Schema({
-    image : {
-        type:String
+const profileSchema = new mongoose.Schema({
+    image: {
+        type: String
         // type:Buffer
     },
-    Plan:{
-        type:mongoose.Schema.Types.ObjectID,
-        ref:'consultationPlan'
+    Plan: {
+        type: mongoose.Schema.Types.ObjectID,
+        ref: 'consultationPlan'
     },
     subscriptionStatus: {
-    type: String,
-    enum: ['active', 'inactive', 'canceled'],
-    default: 'inactive',
-     },
+        type: String,
+        enum: ['active', 'inactive', 'canceled'],
+        default: 'inactive',
+    },
     paymentStatus: {
-    type: String,
-    enum: ['pending', 'paid', 'failed'],
-    default: 'pending',
-   },
-   phonePeTxnId: {
-        type:String
+        type: String,
+        enum: ['pending', 'paid', 'failed'],
+        default: 'pending',
+    },
+    phonePeTxnId: {
+        type: String
     },
     CustomerId: {
-        type:String
-     },
-    Gpicture : { 
-        type:String
-     },
+        type: String
+    },
+    Gpicture: {
+        type: String
+    },
     userId: {
         type: String
     },
-    name:{
-        type:String
+    name: {
+        type: String
     },
     profileData: {
         type: String
     },
-    profileSummary:{
+    profileSummary: {
         type: String
     },
-    city:{
-        type:Object
+    city: {
+        type: Object
     },
-    college:{
-        type:Object
+    college: {
+        type: Object
     },
-    selectedCountry:{
+    selectedCountry: {
 
     },
-    currentEmp:{
+    currentEmp: {
 
     },
-    employers:[
+    employers: [
 
     ],
-    Qualification:{
+    Qualification: {
 
     },
-    tenth:{
+    tenth: {
 
     },
-    twelfth:{
+    twelfth: {
 
     },
-    degree:{
+    degree: {
 
     },
-    saveComent:{
+    saveComent: {
 
     },
     email: {
         type: String,
         unique: true
     },
-    phoneNumber:{
-        type:String
-    },
-    Aadhar:{
-        type:String
-    },
-    message:{
-    type:String
-
-    },
-    imageConsent:{
-        type:Boolean
-    },
-    external:{
-        type:Boolean
-    },
-    disclaimerConsent:{
-        type: Boolean
-    },
-    uploadConsent:{
-        type: Boolean
-    },
-    ipAddress:{
-        type:String
-    },
-    panCard:{
-        type:String
-    },
-    NoticePeriod:{
-        type:String
-    },
-    ExpectedSalary :{
-        type:String
-    },
-    currentCTC:{
-        type:String
-    },
-    age:{
-        type:String
-    },
-    EditResumeCounter:{
-        
-    },
-    DownloadResumeCounter:{
-
-    },
-    qualificationDetails:[{
-        degree:{
-            type:String
-        },
-        score:{
-            type:String
-        },
-        collegeName:{
-            type:String
-        },
-        stateCode:{
-            type:String
-        },
-        countryCode:{
-            type:String
-        },
-        studyField:{
-            type:String
-        },
-         yop:{
-            type:String
-        },
-        city:{
-            type:String
-        } ,
-        country:{
-            type:String
-         }
-    }],
-    Skills:{
-        type:String
-    },
-    Experiance:{
-        type:String
-    },
-    status:{
-       select: {
-            type:String}
-    },
-    isApproved:{
-        type:Boolean
-    },
-    isReject:{
-        type:Boolean
-    },
-    isOnhold:{
-        type:Boolean
-    },
-    LogedInTime:{
-        type:Date
-    },
-    online:{
-        type:Boolean
-    },
-    Tags:[
-        
-    ],
-    personalDetails:[{
-        gender: {
-            type:String
-        },
-        maritalStatus: {
-            type:String
-        },
-        dob: {
-            type:Date
-        }, 
-        fatherName:{
-            type:String
-        },
-        motherName:{
-            type:String
-        },
-        Nationality:{
-            type:String
-        }
-    }],
-    achievements: [{type:String}],
-    interests: [{type:String}],
-    projects:[{type:String}],
-    tokenNo:[{
-        tokenNo:{
-        type:Number
-    },
-        Date:{
-            type : Date
-        }    
-    }
-    ],
-    linkedin:{
-        type:String
-    },
-    objective:{
+    phoneNumber: {
         type: String
     },
-    message:{
-        type:String
-    },
-    HRsEmployerFeedBack:[
-    
-],
-    address:{
-        type:String
-    },
-    totalExperience:{
+    Aadhar: {
         type: String
     },
-    experiences:[{
-        company:{
+    message: {
+        type: String
+
+    },
+    imageConsent: {
+        type: Boolean
+    },
+    external: {
+        type: Boolean
+    },
+    isEditEnable: {
+        type: Boolean
+    },
+    disclaimerConsent: {
+        type: Boolean
+    },
+    uploadConsent: {
+        type: Boolean
+    },
+    ipAddress: {
+        type: String
+    },
+    panCard: {
+        type: String
+    },
+    NoticePeriod: {
+        type: String
+    },
+    ExpectedSalary: {
+        type: String
+    },
+    currentCTC: {
+        type: String
+    },
+    age: {
+        type: String
+    },
+    EditResumeCounter: {
+
+    },
+    DownloadResumeCounter: {
+
+    },
+    qualificationDetails: [{
+        degree: {
             type: String
         },
-        role:{
-            type:String
+        score: {
+            type: String
         },
-        startDate:{
+        collegeName: {
+            type: String
+        },
+        stateCode: {
+            type: String
+        },
+        countryCode: {
+            type: String
+        },
+        studyField: {
+            type: String
+        },
+        yop: {
+            type: String
+        },
+        city: {
+            type: String
+        },
+        country: {
+            type: String
+        }
+    }],
+    Skills: {
+        type: String
+    },
+    Experiance: {
+        type: String
+    },
+    status: {
+        select: {
+            type: String
+        }
+    },
+    isApproved: {
+        type: Boolean
+    },
+    isReject: {
+        type: Boolean
+    },
+    isOnhold: {
+        type: Boolean
+    },
+    LogedInTime: {
+        type: Date
+    },
+    online: {
+        type: Boolean
+    },
+    Tags: [
+
+    ],
+    personalDetails: [{
+        gender: {
+            type: String
+        },
+        maritalStatus: {
+            type: String
+        },
+        dob: {
             type: Date
         },
-        endDate:{
+        fatherName: {
+            type: String
+        },
+        motherName: {
+            type: String
+        },
+        Nationality: {
+            type: String
+        }
+    }],
+    achievements: [{ type: String }],
+    interests: [{ type: String }],
+    projects: [{ type: String }],
+    tokenNo: [{
+        tokenNo: {
+            type: Number
+        },
+        Date: {
+            type: Date
+        }
+    }
+    ],
+    linkedin: {
+        type: String
+    },
+    objective: {
+        type: String
+    },
+    message: {
+        type: String
+    },
+    HRsEmployerFeedBack: [
+
+    ],
+    address: {
+        type: String
+    },
+    totalExperience: {
+        type: String
+    },
+    experiences: [{
+        company: {
+            type: String
+        },
+        role: {
+            type: String
+        },
+        startDate: {
+            type: Date
+        },
+        endDate: {
             type: Date
         },
         descriptions: [
-        
+
         ]
-        }],
-        certifications:[
+    }],
+    certifications: [
 
-        ],
-        skills:[{
-            heading:{
+    ],
+    skills: [{
+        heading: {
 
-            },
-            items:{
+        },
+        items: {
 
-            }
-        }],
-        languages:[
-        ],
-        interview:[{
+        }
+    }],
+    languages: [
+    ],
+    interview: [{
 
-            tokenNo:{},
-   
-            driveId:{},
-   
-            scannedDateTime:{}
-   
-}]
+        tokenNo: {},
+
+        driveId: {},
+
+        scannedDateTime: {}
+
+    }]
 },
-{timestamps:true})
+    { timestamps: true })
 
-const profileModel= mongoose.model("JobSeeker-Profile",profileSchema)
+const profileModel = mongoose.model("JobSeeker-Profile", profileSchema)
 
-module.exports=profileModel
+module.exports = profileModel
