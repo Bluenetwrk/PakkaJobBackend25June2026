@@ -315,11 +315,21 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
   `
             });
             if (err) {
-                res.send({message:"mail not sent"})
+                res.send({ message: "mail not sent" })
             }
-                res.send({message:"mail was sent successfully", id:result._id})
+            res.send({ message: "mail was sent successfully", id: result._id })
 
         } else {
+            const exuser = await StudentProfileModel.findOne(
+                {
+                    _id: user._id,
+                    isEditEnable: true,
+                    editEnableUntil: { $gt: new Date() }
+                }
+            );
+            if (exuser) {
+                return res.send({ message: "isEditEnable is aleady true" })
+            }
             let token = jwt.sign({ id: user._id }, secretKey)
 
             const verificationLink = `${url}/StudentProfile/verifymail?token=${token}`;
@@ -343,9 +353,10 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
         <p>This link will verify your account.</p>`
             });
             if (error) {
-                res.send({message:"mail not sent"})
+                console.log(error)
+                res.send({ message: "mail not sent" })
             } else {
-                res.send({message:"mail was sent successfully", id: user._id})
+                res.send({ message: "mail was sent successfully", id: user._id })
             }
         }
     } catch (err) {
@@ -363,10 +374,21 @@ router.get("/verifymail", async (req, res) => {
             if (err) {
                 res.send("invalid token")
             } else {
-                let id = valid.id
+                // let id = valid.id
+                // const result = await StudentProfileModel.updateOne(
+                //     { _id: id },
+                //     { $set: { isEditEnable: true } }
+                // );
+                const id = valid.id;
+
                 const result = await StudentProfileModel.updateOne(
                     { _id: id },
-                    { $set: { isEditEnable: true } }
+                    {
+                        $set: {
+                            isEditEnable: true,
+                            editEnableUntil: new Date(Date.now() + 40 * 1000)
+                        }
+                    }
                 );
             }
         })
@@ -382,30 +404,39 @@ router.get("/verifymail", async (req, res) => {
     }
 });
 
-router.get("/checkEditEnable/:id", async (req, res) => {
+router.get("/checkEditEnableInTimeInterval/:id", async (req, res) => {
     try {
         const { id } = req.params;
-        
+
+        // const user = await StudentProfileModel.findOne(
+        //     { _id: id },
+        //     { isEditEnable: true }
+        // );
+
         const user = await StudentProfileModel.findOne(
-            { _id:id },
-            { isEditEnable: true }
+            {
+                _id: id,
+                isEditEnable: true,
+                editEnableUntil: { $gt: new Date() }
+            }
         );
         if (!user) {
-      return res.status(404).json({
-        message: "User not found"
-      });
+            res.send({
+                message: "waiting for user verification"
+            });
+        }else{
+
+        res.send({
+            isEditEnable: true
+        });
     }
 
-    res.json({
-      isEditEnable: user.isEditEnable
-    });
-
-  } catch (error) {
-
-    res.status(500).json({
-      message: "Something went wrong"
-    });
-  }
+    } catch (error) {
+        console.log("err :", error)
+        res.status(500).json({
+            message: "Something went wrong"
+        });
+    }
 });
 
 

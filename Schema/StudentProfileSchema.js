@@ -93,6 +93,9 @@ const profileSchema = new mongoose.Schema({
     isEditEnable: {
         type: Boolean
     },
+    editEnableUntil: {
+        type: Date
+    },
     disclaimerConsent: {
         type: Boolean
     },
