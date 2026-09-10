@@ -264,62 +264,63 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
                 to: user.email,
                 subject: "Welcome to PakkaJob 🎉",
                 html: `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 30px;">
-      
-      <h2 style="color: #2563eb;">
-        Welcome to PakkaJob! 🎉
-      </h2>
-
-      <p>Hi ${user.name || "there"},</p>
-
-      <p>
-        Welcome to <strong>PakkaJob</strong>! We're excited to have you join us.
-      </p>
-
-      <p>
-        Your account has been created successfully. To get started, 
-        please verify your email address by clicking the button below.
-      </p>
-
-      <div style="text-align: center; margin: 30px 0;">
-        <a
-          href="${verificationLink}"
-          style="
-            background-color: #2563eb;
-            color: white;
-            padding: 12px 25px;
-            text-decoration: none;
-            border-radius: 5px;
-            display: inline-block;
-          "
-        >
-          Verify My Email
-        </a>
-      </div>
-
-      <p>
-        Once your email is verified, you can start exploring job opportunities
-        and build your profile on PakkaJob.
-      </p>
-
-      <p>
-        If you didn't create this account, you can safely ignore this email.
-      </p>
-
-      <p>
-        Best regards,<br>
-        <strong>PakkaJob Team</strong>
-      </p>
-
-    </div>
-  `
+                         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 30px;">
+                           
+                           <h2 style="color: #2563eb;">
+                             Welcome to PakkaJob! 🎉
+                           </h2>
+                     
+                           <p>Hi ${user.name || "there"},</p>
+                     
+                           <p>
+                             Welcome to <strong>PakkaJob</strong>! We're excited to have you join us.
+                           </p>
+                     
+                           <p>
+                             Your account has been created successfully. To get started, 
+                             please verify your email address by clicking the button below.
+                           </p>
+                     
+                           <div style="text-align: center; margin: 30px 0;">
+                             <a
+                               href="${verificationLink}"
+                               style="
+                                 background-color: #2563eb;
+                                 color: white;
+                                 padding: 12px 25px;
+                                 text-decoration: none;
+                                 border-radius: 5px;
+                                 display: inline-block;
+                               "
+                             >
+                               Verify My Email
+                             </a>
+                           </div>
+                     
+                           <p>
+                             Once your email is verified, you can start exploring job opportunities
+                             and build your profile on PakkaJob.
+                           </p>
+                     
+                           <p>
+                             If you didn't create this account, you can safely ignore this email.
+                           </p>
+                     
+                           <p>
+                             Best regards,<br>
+                             <strong>PakkaJob Team</strong>
+                           </p>
+                     
+                         </div>
+                                  `                     
             });
             if (err) {
                 res.send({ message: "mail not sent" })
             }
-            res.send({ message: "mail was sent successfully", id: result._id })
+            res.send({ message: "mail was sent successfully", id: result._id, token: token })
 
         } else {
+            let token = jwt.sign({ id: user._id }, secretKey)
             const exuser = await StudentProfileModel.findOne(
                 {
                     _id: user._id,
@@ -328,9 +329,8 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
                 }
             );
             if (exuser) {
-                return res.send({ message: "isEditEnable is aleady true" })
+                return res.send({ message: "isEditEnable is aleady true", id: user._id, token:token })
             }
-            let token = jwt.sign({ id: user._id }, secretKey)
 
             const verificationLink = `${url}/StudentProfile/verifymail?token=${token}`;
             const { data, error } = await resend.emails.send({
@@ -356,7 +356,7 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
                 console.log(error)
                 res.send({ message: "mail not sent" })
             } else {
-                res.send({ message: "mail was sent successfully", id: user._id })
+                res.send({ message: "mail was sent successfully", id: user._id, token: token })
             }
         }
     } catch (err) {
@@ -424,12 +424,12 @@ router.get("/checkEditEnableInTimeInterval/:id", async (req, res) => {
             res.send({
                 message: "waiting for user verification"
             });
-        }else{
+        } else {
 
-        res.send({
-            isEditEnable: true
-        });
-    }
+            res.send({
+                isEditEnable: true
+            });
+        }
 
     } catch (error) {
         console.log("err :", error)
@@ -1163,116 +1163,16 @@ router.post("/uploadToYouTube", upload.single("video"), async (req, res) => {
 
 })
 
+router.get("/getMyCreatedResume/:id", verifyToken, async (req, res) => {
+    try {
+    let resume = await StudentProfileModel.find({
+          CSCId:req.params.id
+    })
+        res.send(resume)
+    } catch (err) {
+        res.status(401).send("server issue")
+    }
+})
+
 
 module.exports = router
-
-
-
-// ................Google Auth setup......bcrypt
-// router.get("/login/failed", (req, res) => {
-//     res.status(401).json({
-//         err: true,
-//         message: "log in failure",
-//     });
-// });
-
-// router.get("/auth/google",
-//     passport.authenticate("google", { scope: ['openid', 'profile', 'email'] },
-//             https:www.googleapis.com/auth/plus.login
-//     ));
-
-// router.get("/auth/google/callback",
-//     passport.authenticate("google", {
-
-//         successRedirect: "/login/success",
-//         failureRedirect: "/login/failed"
-//     }),
-//     function (req, res) {
-//         res.redirect("login/success");
-//     }
-// );
-// router.get("/login/success", (eq, res) => {
-//     if (req.user) {
-//         res.status(200).json({ status: "login success", user: req.user })
-//     }
-// })
-
-// router.get("/logout", (req, res) => {
-//     req.logout();
-//     res.redirect(process.env.CLIENT_URL);
-// });
-// .................................users.....for Register.....................................
-
-// router.post("/Register", body('email').isEmail(), async (req, res) => {
-
-//     let { name, email, password, confirmPassword } = (req.body)
-//     if (!name || !email || !password || !confirmPassword) {
-//         res.send("fields are missing")
-//     }
-//     const error = validationResult(req)
-//     if (!error.isEmpty()) {
-//         return res.send("invalid email")
-//     }
-//     else if (password !== confirmPassword) {
-//         res.send("password and confirm password are not matching")
-//     }
-//     let pass = password.toString()
-//     let salt = await bcrypt.genSalt(10)
-//     let hashPassword = await bcrypt.hash(pass, salt);
-//     password = hashPassword
-//     console.log("pass", password)
-//     try {
-//         const user = new userModel({ name, email, password })
-//         const result = await user.save()
-//         let token = jwt.sign({ id: user._id }, secretKey)
-//         return res.json({ result: "success", token })
-//     } catch (err) {
-//         res.json(err)
-//     }
-// })
-
-// router.post("/GmailRegister", async (req, res) => {
-//     let { gemail, gname } = (req.body)
-//     try {
-//         const user = await new userModel({ email: gemail, name: gname })
-
-//         const result = await user.save(user)
-//         console.log(result)
-//         res.send({ status: "result is ", result })
-//     } catch (err) {
-//         res.send(err)
-//     }
-// })
-
-
-// ................................Login with password.........................
-
-// router.post("/login", async (req, res) => {
-//         const { email, password } = (req.body)
-//         if (!email || !password) {
-//             res.send("fileds are missing")
-//         }
-//         try {
-//             const user = await userModel.findOne({ email: email });
-//             if (user == null) {
-//                 res.send("no user found")
-//             } else {
-//                 const hashedpassword = user.password
-//                 let pass = password.toString()
-
-//                 let result = bcrypt.compareSync(pass, hashedpassword)
-
-//                 if (result == true) {
-
-//                     let token = jwt.sign({ id: user._id }, secretKey)
-
-//                     return res.json({ result: "success", id: user._id, token })
-//                 } else {
-//                     res.send("incorrect password")
-//                 }
-//             }
-//         }
-//         catch (err) {
-//             res.send(err)
-//         }
-//     })

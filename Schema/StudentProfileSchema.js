@@ -31,6 +31,9 @@ const profileSchema = new mongoose.Schema({
     userId: {
         type: String
     },
+    CSCId: {
+        type: String
+    },
     name: {
         type: String
     },
