@@ -312,7 +312,7 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
                            </p>
                      
                          </div>
-                                  `                     
+                                  `
             });
             if (err) {
                 res.send({ message: "mail not sent" })
@@ -329,7 +329,7 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
                 }
             );
             if (exuser) {
-                return res.send({ message: "isEditEnable is aleady true", id: user._id, token:token })
+                return res.send({ message: "isEditEnable is aleady true", id: user._id, token: token })
             }
 
             const verificationLink = `${url}/StudentProfile/verifymail?token=${token}`;
@@ -515,11 +515,12 @@ router.post("/loginforAdmin", body('email').isEmail(), async (req, res) => {
 router.put("/updatProfile/:id", verifyToken, async (req, res) => {
     try {
         const { tokenNo, HRsEmployerFeedBack, interview, ...rest } = req.body;
-
         const updateFields = {
-            $set: rest,
+            $set: 
+                rest,
+                ResumeCreatedDate: new Date()
+            
         };
-
         // Add to arrays only if values are provided
         if (tokenNo || HRsEmployerFeedBack || interview) {
             updateFields.$addToSet = {};
@@ -1165,9 +1166,9 @@ router.post("/uploadToYouTube", upload.single("video"), async (req, res) => {
 
 router.get("/getMyCreatedResume/:id", verifyToken, async (req, res) => {
     try {
-    let resume = await StudentProfileModel.find({
-          CSCId:req.params.id
-    })
+        let resume = await StudentProfileModel.find({
+            CSCId: req.params.id
+        })
         res.send(resume)
     } catch (err) {
         res.status(401).send("server issue")

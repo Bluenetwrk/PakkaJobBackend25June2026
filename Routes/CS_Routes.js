@@ -365,6 +365,19 @@ router.get("/getProfile/:id", CheckComp, async (req, res) => {
         res.send("back end error occured")
     }
 })
+
+router.get("/viewProfile/:id", async (req, res) => {
+    try {
+        let result = await CSProfileModel.findOne({ _id: req.params.id })
+        if (result) {
+            res.send({ status: "success", result })
+        }
+
+    } catch (err) {
+        res.send("back end error occured")
+        console.log(err)
+    }
+})
 // get only company logo from from profile for job posts
 router.get("/getLogo/:id", async (req, res) => {
     try {

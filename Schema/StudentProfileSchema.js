@@ -85,7 +85,9 @@ const profileSchema = new mongoose.Schema({
     },
     message: {
         type: String
-
+    },
+    selectedTemplate: {
+        type: String
     },
     imageConsent: {
         type: Boolean
@@ -97,6 +99,9 @@ const profileSchema = new mongoose.Schema({
         type: Boolean
     },
     editEnableUntil: {
+        type: Date
+    },
+    ResumeCreatedDate: {
         type: Date
     },
     disclaimerConsent: {
