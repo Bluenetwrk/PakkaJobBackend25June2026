@@ -405,6 +405,18 @@ router.put("/updatProfile/:id", verifyToken, async (req, res) => {
     }
 })
 
+// ....delete JobSeeker Profile ....
+router.delete("/deleteJobSeeker/:id", async (req, res) => {
+    try {
+        const Archived = await CSProfileModel.findByIdAndDelete({ _id: req.params.id })
+        const user = await new DeletedJobSeeker({ Archived: Archived })
+        const resu = await user.save()
+        res.send("success")
+    } catch (err) {
+        res.send("error")
+    }
+})
+
 
 // ....get total number of Employees for Admin..
 router.get("/getAllEmployees", verifyToken, async(req, res)=>{

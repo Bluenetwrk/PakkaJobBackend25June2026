@@ -48,13 +48,14 @@ const profileSchema= new mongoose.Schema({
     panCard:{
         type:String
     },
-    CompanyGSTIN:{
+    
+    state:{
         type:String
     },
     CompanyCIN:{
         type:String
     },
-    AboutCompany:{
+    address:{
         type:String
     },
     secondaryuserDesignation:{
