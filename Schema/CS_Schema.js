@@ -12,7 +12,7 @@ const profileSchema= new mongoose.Schema({
     },
     jobseeker_email:{
         type: String,
-        unique: true
+        // unique: true
     },
     jobseeker_phone:{
         type:String
