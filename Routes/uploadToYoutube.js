@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const { google } = require("googleapis");
+const fs = require("fs")
 const StudentProfileModel = require("../Schema/StudentProfileSchema")
 
 async function uploadToYoutube(filePath) {  
@@ -32,4 +34,4 @@ async function uploadToYoutube(filePath) {
  const videoId = response.data.id;  
  return `https://www.youtube.com/watch?v=${videoId}`;  
 }
-module.exports = router
+module.exports = uploadToYoutube

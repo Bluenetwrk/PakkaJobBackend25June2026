@@ -245,7 +245,7 @@ router.post("/Glogin", body('email').isEmail(), async (req, res) => {
 router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
     try {
         let { email } = (req.body.jobseekerForm)
-        const url = process.env.BACKEND_URL || "http://localhost:8080";
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
         const error = validationResult(email)
         if (!error.isEmpty()) {
             return res.send("invalid email")
@@ -254,10 +254,11 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
         if (user == null) {
             const user = await new StudentProfileModel({ email: email })
             const result = await user.save(user)
-            let token = jwt.sign({ id: result._id }, secretKey)
+            let token = jwt.sign({ id: result._id }, secretKey, { expiresIn: "1h" })
 
             //welcome mail...............................
-            const verificationLink = `${url}/StudentProfile/verifymail?token=${token}`;
+            // const verificationLink = `${url}/StudentProfile/verifymail?token=${token}`;
+            const verificationLink = `${frontendUrl}/My-Profile?token=${token}`;
 
             const { data, error } = await resend.emails.send({
                 from: "PakkaJob <noreply@pakkajob.in>",
@@ -320,7 +321,7 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
             res.send({ message: "mail was sent successfully", id: result._id, token: token })
 
         } else {
-            let token = jwt.sign({ id: user._id }, secretKey)
+            let token = jwt.sign({ id: user._id }, secretKey, { expiresIn: "1h" })
             const exuser = await StudentProfileModel.findOne(
                 {
                     _id: user._id,
@@ -332,7 +333,9 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
                 return res.send({ message: "isEditEnable is aleady true", id: user._id, token: token })
             }
 
-            const verificationLink = `${url}/StudentProfile/verifymail?token=${token}`;
+            // const verificationLink = `${url}/StudentProfile/verifymail?token=${token}`;
+            const verificationLink = `${frontendUrl}/My-Profile?token=${token}`;
+
             const { data, error } = await resend.emails.send({
                 from: "PakkaJob <noreply@pakkajob.in>",
                 to: user.email,
@@ -353,7 +356,6 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
         <p>This link will verify your account.</p>`
             });
             if (error) {
-                console.log(error)
                 res.send({ message: "mail not sent" })
             } else {
                 res.send({ message: "mail was sent successfully", id: user._id, token: token })
@@ -364,9 +366,10 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
     }
 })
 
-router.get("/verifymail", async (req, res) => {
+router.post("/verifymail", async (req, res) => {
     try {
-        const { token } = req.query;
+        const { token } = req.body;
+        const { studId } = req.body;
         if (!token) {
             return res.status(400).send("Verification token is required");
         }
@@ -374,26 +377,25 @@ router.get("/verifymail", async (req, res) => {
             if (err) {
                 res.send("invalid token")
             } else {
-                // let id = valid.id
-                // const result = await StudentProfileModel.updateOne(
-                //     { _id: id },
-                //     { $set: { isEditEnable: true } }
-                // );
-                const id = valid.id;
 
-                const result = await StudentProfileModel.updateOne(
-                    { _id: id },
-                    {
-                        $set: {
-                            isEditEnable: true,
-                            editEnableUntil: new Date(Date.now() + 40 * 1000)
+                const id = valid.id;
+                if (studId == id) {
+                    const result = await StudentProfileModel.updateOne(
+                        { _id: id },
+                        {
+                            $set: {
+                                isEditEnable: true,
+                                editEnableUntil: new Date(Date.now() + 40 * 1000)
+                            }
                         }
-                    }
-                );
+                    );
+                    return res.status(200).send("Email verified successfully!");
+                } else {
+                    res.send("invalid token")
+                }
             }
         })
 
-        return res.status(200).send("Email verified successfully!");
 
     } catch (error) {
         console.log(error)
@@ -516,10 +518,10 @@ router.put("/updatProfile/:id", verifyToken, async (req, res) => {
     try {
         const { tokenNo, HRsEmployerFeedBack, interview, ...rest } = req.body;
         const updateFields = {
-            $set: 
+            $set:
                 rest,
-                ResumeCreatedDate: new Date()
-            
+            ResumeCreatedDate: new Date()
+
         };
         // Add to arrays only if values are provided
         if (tokenNo || HRsEmployerFeedBack || interview) {
@@ -1137,6 +1139,7 @@ router.get("/DeletedJobSeekerTagsIds/:id", async (req, res) => {
         console.log(err)
     }
 })
+const uploadToYoutube = require('./uploadToYoutube')
 //youtube video upload
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -1149,14 +1152,14 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 // API Endpoint  
 router.post("/uploadToYouTube", upload.single("video"), async (req, res) => {
+
     try {
         if (!req.file) {
             return res.status(400).json({ error: "No video uploaded" });
-
-            const videoPath = req.file.path;
-            const videoUrl = await uploadToYoutube(videoPath);
-            res.json({ url: videoUrl });
         }
+        const videoPath = req.file.path;
+        const videoUrl = await uploadToYoutube(videoPath);
+        res.json({ url: videoUrl });
     } catch (error) {
         console.error("UPLOAD ERROR:", error);
         res.status(500).json({ error: "Upload failed" });

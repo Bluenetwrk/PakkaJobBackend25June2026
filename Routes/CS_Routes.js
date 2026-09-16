@@ -1,10 +1,10 @@
 const express = require("express");
 const app = express();
 const router = express.Router();
-const CSProfileModel= require("../Schema/CS_Schema")
+const CSProfileModel = require("../Schema/CS_Schema")
 // const StudentProfileModel = require("../Schema/StudentProfileSchema")
-const ArchiveEmployee= require("../Schema/ArchivedEmployee")
-const NewCSProfileRegistrationModel= require("../Schema/CSNewRegistrationSchema")
+const ArchiveEmployee = require("../Schema/ArchivedEmployee")
+const NewCSProfileRegistrationModel = require("../Schema/CSNewRegistrationSchema")
 const bcrypt = require("bcrypt")
 const { body, validationResult } = require("express-validator")
 const jwt = require("jsonwebtoken")
@@ -16,97 +16,98 @@ var nodemailer = require('nodemailer');
 const fs = require('fs')
 const axios = require('axios');
 const bodyParser = require('body-parser');
-  
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
-function verifyToken(req, res, next){
-    if(req.headers['authorization']){
-    let token = req.headers['authorization'].split(" ")[1]
-    let id = req.headers['authorization'].split(" ")[0]
-    if(token){
-        jwt.verify(token, secretKey, (err, valid)=>{
-    if(err){
-        res.send("invalid token")
-        }else{
-    let validid=valid.id
-    if(validid===id){
-        next()
+function verifyToken(req, res, next) {
+    if (req.headers['authorization']) {
+        let token = req.headers['authorization'].split(" ")[1]
+        let id = req.headers['authorization'].split(" ")[0]
+        if (token) {
+            jwt.verify(token, secretKey, (err, valid) => {
+                if (err) {
+                    res.send("invalid token")
+                } else {
+                    let validid = valid.id
+                    if (validid === id) {
+                        next()
+                    }
+                }
+            })
+        } else {
+            res.send("Unauthorised Access")
+        }
     }
-        }   })
-    }else{
+}
+
+function verifyHomeJobs(req, res, next) {
+    let valid = req.headers['authorization']
+    if (valid === 'BlueItImpulseWalkinIn') {
+        next()
+    } else {
         res.send("Unauthorised Access")
     }
 }
-}
-
-function verifyHomeJobs(req, res, next){
-    let valid=req.headers['authorization']
-    if(valid==='BlueItImpulseWalkinIn'){
-        next()
-}else{
-    res.send("Unauthorised Access")
-}
-}
 
 const storage = multer.diskStorage({
-    destination: function(req, file, cb){
+    destination: function (req, file, cb) {
         cb(null, 'public/Images');
     },
-    filename: function(req, file, cb) {   
+    filename: function (req, file, cb) {
         cb(null, uuidv4() + "_" + Date.now() + path.extname(file.originalname));
     }
 });
 
 const upload = multer({ storage: storage });
 
-router.put("/uploadImage/:id",upload.single('image'), async (req, res)=>{
+router.put("/uploadImage/:id", upload.single('image'), async (req, res) => {
     imagePath = req.file.filename
-    try{
-    let result= await CSProfileModel.updateOne(
-        {_id:req.params.id},
-        // {$set:{image: `https://itwalkin-backend-testrelease-2-0-1-0824.onrender.com/Images/${imagePath}`}}       
-        // {$set:{image: `http://localhost:8080/Images/${imagePath}`}}       
-        {$set:{image: `https://nontech-backend.onrender.com/Images/${imagePath}`}} 
-        // {$set:{image: `https://i-twalkin-backend-testrelease-2-0-1-0824.vercel.app/Images/${imagePath}`}} 
-                   
-    )
-    if(result){
-    res.send(result)
-}
-}catch(err){
-    res.send("back error occured")
-}
+    try {
+        let result = await CSProfileModel.updateOne(
+            { _id: req.params.id },
+            // {$set:{image: `https://itwalkin-backend-testrelease-2-0-1-0824.onrender.com/Images/${imagePath}`}}       
+            // {$set:{image: `http://localhost:8080/Images/${imagePath}`}}       
+            { $set: { image: `https://nontech-backend.onrender.com/Images/${imagePath}` } }
+            // {$set:{image: `https://i-twalkin-backend-testrelease-2-0-1-0824.vercel.app/Images/${imagePath}`}} 
+
+        )
+        if (result) {
+            res.send(result)
+        }
+    } catch (err) {
+        res.send("back error occured")
+    }
 })
 
 // delete logo rout.........
 
 router.put("/deleteImage/:id", async (req, res) => {
-    const comingImagepath=req.body.image
+    const comingImagepath = req.body.image
     // const trimImagepath=comingImagepath.replace("https://itwalkin-backend-testrelease-2-0-1-0824.onrender.com/Images/","")
     // const trimImagepath=comingImagepath.replace("http://localhost:8080/Images/","")
-    const trimImagepath=comingImagepath.replace("https://nontech-backend.onrender.com/Images/","")
+    const trimImagepath = comingImagepath.replace("https://nontech-backend.onrender.com/Images/", "")
     // const trimImagepath=comingImagepath.replace("https://i-twalkin-backend-testrelease-2-0-1-0824.vercel.app/Images/","")
-    const filepath=`public/Images/${trimImagepath}`
+    const filepath = `public/Images/${trimImagepath}`
 
     try {
-        let result = await CSProfileModel.updateOne(           
-            {_id: req.params.id}, 
-            {$unset:req.body},
+        let result = await CSProfileModel.updateOne(
+            { _id: req.params.id },
+            { $unset: req.body },
             fs.unlinkSync(filepath, (err) => {
                 if (err) {
-                  console.error(`Error removing file: ${err}`);
-                  return 0;
-                }else{
+                    console.error(`Error removing file: ${err}`);
+                    return 0;
+                } else {
                     return 1
                     // console.log("sucessss")
                 }
             })
-         )
+        )
         if (result) {
             res.send("success")
-        }                     
+        }
     } catch (err) {
         res.send("back end error occured")
 
@@ -121,28 +122,28 @@ const client = require('twilio')(accountSid, authToken);
 let OTP
 let PhoneNumber
 
-router.post("/otpSignUp", async (req, res)=>{
+router.post("/otpSignUp", async (req, res) => {
     // console.log(req.body.PhoneNumber)
-    PhoneNumber =req.body.PhoneNumber
-    try{
-    OTP = ""
-    let digits ="0123456789"
-    for(let i=0; i<4; i++){
-         OTP += digits[Math.floor(Math.random()*10)];
-    }
-client.messages
-    .create({
-        body:"your otp verification is " + OTP,
+    PhoneNumber = req.body.PhoneNumber
+    try {
+        OTP = ""
+        let digits = "0123456789"
+        for (let i = 0; i < 4; i++) {
+            OTP += digits[Math.floor(Math.random() * 10)];
+        }
+        client.messages
+            .create({
+                body: "your otp verification is " + OTP,
                 from: '+13526786317',
-        to: `+91${PhoneNumber}`
-    })
-    res.send("otp sent")
-}catch(err){
-    res.send("something went wrong")
-}
+                to: `+91${PhoneNumber}`
+            })
+        res.send("otp sent")
+    } catch (err) {
+        res.send("something went wrong")
+    }
 })
 router.post("/verifyOtp", async (req, res) => {
-    const { isApproved , ipAddress} = req.body
+    const { isApproved, ipAddress } = req.body
     let otp = req.body.otp
     try {
         if (otp !== OTP) {
@@ -150,67 +151,45 @@ router.post("/verifyOtp", async (req, res) => {
         }
         let user = await CSProfileModel.findOne({ phoneNumber: PhoneNumber })
         if (user == null) {
-            let saveUser = await CSProfileModel({ phoneNumber: PhoneNumber, isApproved: isApproved  , ipAddress:ipAddress})
+            let saveUser = await CSProfileModel({ phoneNumber: PhoneNumber, isApproved: isApproved, ipAddress: ipAddress })
             let savedUser = await saveUser.save()
             if (savedUser) {
-                
+
                 let token = jwt.sign({ id: savedUser._id }, secretKey)
 
                 res.send({ status: "success", token: token, id: savedUser._id })
             }
-        }else{
-        let token = jwt.sign({ id: user._id }, secretKey)
-        res.send({ status: "success", token: token, id: user._id })
+        } else {
+            let token = jwt.sign({ id: user._id }, secretKey)
+            res.send({ status: "success", token: token, id: user._id })
         }
     } catch (err) {
         res.send("backend issue")
     }
 })
 router.post("/Glogin", async (req, res) => {
-    // console.log(req.body)
     try {
-    let { userId, gtoken, email, name, isApproved, ipAddress } = (req.body)
+        let { userId, gtoken, email, name, isApproved, ipAddress } = (req.body)
 
         let user = await CSProfileModel.findOne({ email: email });
         if (user == null) {
-        const user = await new CSProfileModel(req.body)
-        // const user = await new CSProfileModel({ email: email, name: name,  userId : userId, 
-        //     isApproved:isApproved, ipAddress:ipAddress})
-        const result = await user.save(user)                     
-// var transporter = nodemailer.createTransport({
-//     service: 'gmail',
-//     auth: {
-//       user: 'bluenetwrk@gmail.com',
-//       pass: 'vwzv axcq ywrw bxjd'
-//     }
-//   });
-//   var mailOptions = {
-//     from: 'bluenetwrk@gmail.com',
-//     to: result.email,
-//     subject: `Successfully Registered with Itwalkin`,
-//     html: '<p>Welcome to Itwalkin Job Portal</p>'+'<p>click <a href="http://www.itwalkin.com">itwalkin</a> to explore more </p>'
-//   };
-  
-//   transporter.sendMail(mailOptions,  function(error, info){
-//     if (error) {
-//     //   console.log(error);
-//     //    res.send("could not send the mail")
-//     } else {
-//     //   console.log('Email sent: ' + info.response);
-//     //    res.send(" mail sent succesfully")
-//     }
-//   });
-  let gtoken = jwt.sign({id:result._id},secretKey)
-            res.send({status : "success" ,token : gtoken ,id: result._id ,action:"registered"
-                })
-        } else {   
-            let Nowtime = Date()  
+            const user = await new CSProfileModel(req.body)
+            // const user = await new CSProfileModel({ email: email, name: name,  userId : userId, 
+            //     isApproved:isApproved, ipAddress:ipAddress})
+            const result = await user.save(user)
+            // console.log(" registration",result)
+            let gtoken = jwt.sign({ id: result._id }, secretKey)
+            res.send({
+                status: "success", token: gtoken, id: result._id, action: "registered"
+            })
+        } else {
+            let Nowtime = Date()
             let result = await CSProfileModel.updateOne(
-                {_id: user._id},
-               {$set: {LogedInTime:Nowtime}}
+                { _id: user._id },
+                { $set: { LogedInTime: Nowtime } }
             )
-            let gtoken = jwt.sign({id:user._id},secretKey)
-            res.send({status : "success" ,token : gtoken ,id: user._id, action:"login"})
+            let gtoken = jwt.sign({ id: user._id }, secretKey)
+            res.send({ status: "success", token: gtoken, id: user._id, action: "login" })
         }
     } catch (err) {
         res.send(err)
@@ -219,60 +198,61 @@ router.post("/Glogin", async (req, res) => {
 router.post("/Userlogin", async (req, res) => {
     // console.log(req.body)
     try {
-    let { CSId, gtoken, jobseeker_email,jobseeker_name,email,jobseeker_phone,created_date, resume_type,created_resume,name, isApproved, ipAddress } = (req.body)
+        let { CSId, gtoken, jobseeker_email, jobseeker_name, email, jobseeker_phone, created_date, resume_type, created_resume, name, isApproved, ipAddress } = (req.body)
 
         let user = await CSProfileModel.findOne({ jobseeker_email: jobseeker_email });
         if (user == null) {
-        const user = await new CSProfileModel(req.body)
-        // const user = await new CSProfileModel({ email: email, name: name,  userId : userId, 
-        //     isApproved:isApproved, ipAddress:ipAddress})
-        const result = await user.save(user)                     
-var transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: 'bluenetwrk@gmail.com',
-      pass: 'vwzv axcq ywrw bxjd'
-    }
-  });
-  var mailOptions = {
-    from: 'bluenetwrk@gmail.com',
-    to: result.jobseeker_email,
-    subject: `Successfully Registered with Itwalkin`,
-    html: '<p>Welcome to Itwalkin Job Portal</p>'+'<p>click <a href="http://www.itwalkin.com">itwalkin</a> to explore more </p>'
-  };
-  
-  transporter.sendMail(mailOptions,  function(error, info){
-    if (error) {
-    //   console.log(error);
-    //    res.send("could not send the mail")
-    } else {
-    //   console.log('Email sent: ' + info.response);
-    //    res.send(" mail sent succesfully")
-    }
-  });
-  let gtoken = jwt.sign({id:result._id},secretKey)
-            res.send({status : "success" ,token : gtoken ,id: result._id ,action:"registered"
-                })
-        } else {   
-            let Nowtime = Date()  
+            const user = await new CSProfileModel(req.body)
+            // const user = await new CSProfileModel({ email: email, name: name,  userId : userId, 
+            //     isApproved:isApproved, ipAddress:ipAddress})
+            const result = await user.save(user)
+            var transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: 'bluenetwrk@gmail.com',
+                    pass: 'vwzv axcq ywrw bxjd'
+                }
+            });
+            var mailOptions = {
+                from: 'bluenetwrk@gmail.com',
+                to: result.jobseeker_email,
+                subject: `Successfully Registered with Itwalkin`,
+                html: '<p>Welcome to Itwalkin Job Portal</p>' + '<p>click <a href="http://www.itwalkin.com">itwalkin</a> to explore more </p>'
+            };
+
+            transporter.sendMail(mailOptions, function (error, info) {
+                if (error) {
+                    //   console.log(error);
+                    //    res.send("could not send the mail")
+                } else {
+                    //   console.log('Email sent: ' + info.response);
+                    //    res.send(" mail sent succesfully")
+                }
+            });
+            let gtoken = jwt.sign({ id: result._id }, secretKey)
+            res.send({
+                status: "success", token: gtoken, id: result._id, action: "registered"
+            })
+        } else {
+            let Nowtime = Date()
             let result = await CSProfileModel.updateOne(
-                {_id: user._id},
-               {$set: {LogedInTime:Nowtime}}
+                { _id: user._id },
+                { $set: { LogedInTime: Nowtime } }
             )
-            let gtoken = jwt.sign({id:user._id},secretKey)
-            res.send({status : "success" ,token : gtoken ,id: user._id, action:"login"})
+            let gtoken = jwt.sign({ id: user._id }, secretKey)
+            res.send({ status: "success", token: gtoken, id: user._id, action: "login" })
         }
     } catch (err) {
         res.send(err)
     }
 })
 
-router.post("/NewCSRegistration",  async(req, res)=>{
+router.post("/NewCSRegistration", async (req, res) => {
     // console.log(req.body)
 
-    try{
-        let User=await new NewCSProfileRegistrationModel(req.body)
-        let result=await User.save()
+    try {
+        let User = await new NewCSProfileRegistrationModel(req.body)
+        let result = await User.save()
         const response = await axios.post(
             'https://login.microsoftonline.com/ae4ae520-4db7-4149-ad51-778e540d8bec/oauth2/v2.0/token',
             new URLSearchParams({
@@ -293,8 +273,8 @@ router.post("/NewCSRegistration",  async(req, res)=>{
         res.json(error.code);
         // console.log(error.code)
     }
-    
-    
+
+
 })
 
 // router.post('/get-token', async (req, res) => {
@@ -325,42 +305,42 @@ router.post("/NewCSRegistration",  async(req, res)=>{
 
 
 // login for Admin in search params...
-router.post("/loginforAdmin", body('email').isEmail(), async(req, res)=>{
-    try{
-        let {email}=req.body
+router.post("/loginforAdmin", body('email').isEmail(), async (req, res) => {
+    try {
+        let { email } = req.body
         const error = validationResult(req)
         if (!error.isEmpty()) {
-             return res.send("invalid email")
+            return res.send("invalid email")
         }
-        let user = await CSProfileModel.findOne({email:email})
-        if(user==null){
+        let user = await CSProfileModel.findOne({ email: email })
+        if (user == null) {
             res.send("user not registered")
-        }else{
+        } else {
             // res.send(user)
             let token = jwt.sign({ id: user._id }, secretKey)
             res.send({ status: "success", id: user._id, token })
         }
-    }catch(err){
+    } catch (err) {
         res.send("back end error occured")
     }
 })
 
 // get profile for my profile  and update frofile UI
-function CheckComp(req, res, next){
-    let valid=req.headers['authorization']
-    if(valid==='BlueItImpulseWalkinIn'){
+function CheckComp(req, res, next) {
+    let valid = req.headers['authorization']
+    if (valid === 'BlueItImpulseWalkinIn') {
         next()
-}else{
-    res.send("Unauthorised Access")
-}
+    } else {
+        res.send("Unauthorised Access")
+    }
 }
 router.get("/getProfile/:id", CheckComp, async (req, res) => {
     try {
         let result = await CSProfileModel.findOne({ _id: req.params.id })
         if (result) {
-            res.send({status:"success", result})
-        } 
-        
+            res.send({ status: "success", result })
+        }
+
     } catch (err) {
         res.send("back end error occured")
     }
@@ -384,7 +364,7 @@ router.get("/getLogo/:id", async (req, res) => {
         let result = await CSProfileModel.findOne({ _id: req.params.id })
         if (result) {
             res.send(result.image)
-        }         
+        }
     } catch (err) {
         res.send("back end error occured")
     }
@@ -393,13 +373,13 @@ router.get("/getLogo/:id", async (req, res) => {
 router.put("/updatProfile/:id", verifyToken, async (req, res) => {
     try {
         let result = await CSProfileModel.updateOne(
-            {_id: req.params.id},
-           {$set:req.body}
+            { _id: req.params.id },
+            { $set: req.body }
         )
         if (result) {
             res.send("success")
-        } 
-        
+        }
+
     } catch (err) {
         res.send("back end error occured")
     }
@@ -419,181 +399,183 @@ router.delete("/deleteJobSeeker/:id", async (req, res) => {
 
 
 // ....get total number of Employees for Admin..
-router.get("/getAllEmployees", verifyToken, async(req, res)=>{
-    try{
-        let result= await CSProfileModel.find()
+router.get("/getAllEmployees", verifyToken, async (req, res) => {
+    try {
+        let result = await CSProfileModel.find()
         res.send(result)
-    }catch(err){
+    } catch (err) {
         res.send("backend error occured")
     }
 })
 
 // delete epmloyee API for admin
-router.delete("/deleteEmployee/:id", async(req,res)=>{
-    try{
-        let result = await CSProfileModel.deleteOne({_id:req.params.id})
-        if(result){
+router.delete("/deleteEmployee/:id", async (req, res) => {
+    try {
+        let result = await CSProfileModel.deleteOne({ _id: req.params.id })
+        if (result) {
             res.send("success")
         }
-    }catch(err){
+    } catch (err) {
         res.send("server issue")
     }
 })
 // update for approval from admin
-router.put("/setApproval/:id", verifyToken, async(req, res)=>{
-    try{
-        let result= await CSProfileModel.updateOne(
-            {_id:req.params.id},
-            {$set:req.body}
+router.put("/setApproval/:id", verifyToken, async (req, res) => {
+    try {
+        let result = await CSProfileModel.updateOne(
+            { _id: req.params.id },
+            { $set: req.body }
         )
-        if(result){
+        if (result) {
             res.send("success")
         }
-    }catch(err){
+    } catch (err) {
         res.send("backend error occured")
     }
 })
 
 // update for Reject from admin
-router.put("/isReject/:id", verifyToken, async(req, res)=>{
-    try{
-        let result= await CSProfileModel.updateOne(
-            {_id:req.params.id},
-            {$set:req.body}
+router.put("/isReject/:id", verifyToken, async (req, res) => {
+    try {
+        let result = await CSProfileModel.updateOne(
+            { _id: req.params.id },
+            { $set: req.body }
         )
-        if(result){
+        if (result) {
             res.send("success")
         }
-    }catch(err){
+    } catch (err) {
         res.send("backend error occured")
     }
 })
 // isOnhold status from admin
 
-router.put("/isOnhold/:id", verifyToken, async(req, res)=>{
-    try{
-        let result= await CSProfileModel.updateOne(
-            {_id:req.params.id},
-            {$set:req.body}
+router.put("/isOnhold/:id", verifyToken, async (req, res) => {
+    try {
+        let result = await CSProfileModel.updateOne(
+            { _id: req.params.id },
+            { $set: req.body }
         )
-        if(result){
+        if (result) {
             res.send("success")
         }
-    }catch(err){
+    } catch (err) {
         res.send("backend error occured")
     }
 })
 
 
 
-router.get("/getApprovedEmp", verifyToken, async(req, res)=>{
-    try{
-        let result = await CSProfileModel.aggregate([{$match : { isApproved : true }}])
+router.get("/getApprovedEmp", verifyToken, async (req, res) => {
+    try {
+        let result = await CSProfileModel.aggregate([{ $match: { isApproved: true } }])
 
-// let result = await CSProfileModel.find({"isApproved": { $exists: 1}}) // finds if the isapproved field exist or not(if exist send 1,if not send 0), not caring about wheather tue or false
+        // let result = await CSProfileModel.find({"isApproved": { $exists: 1}}) // finds if the isapproved field exist or not(if exist send 1,if not send 0), not caring about wheather tue or false
 
-        if(result){
+        if (result) {
             res.send(result)
         }
-    }catch(err){
-    res.send("backend Error Occured")
+    } catch (err) {
+        res.send("backend Error Occured")
     }
 })
 // find all which are not Approved Employeers for admin
 
-router.get("/getNotApprovedEmp", verifyToken, async(req, res)=>{
-    try{
-        let result = await CSProfileModel.aggregate([{$match : { isApproved : false }}])
-        if(result){
+router.get("/getNotApprovedEmp", verifyToken, async (req, res) => {
+    try {
+        let result = await CSProfileModel.aggregate([{ $match: { isApproved: false } }])
+        if (result) {
             res.send(result)
         }
-    }catch(err){
-    res.send("backend Error Occured")
+    } catch (err) {
+        res.send("backend Error Occured")
     }
 })
 
 // find FIRM Company Type
 
-router.get("/getFirmOrganisation", verifyToken, async(req, res)=>{
-    try{
-        let result = await CSProfileModel.aggregate([{$match:{TypeofOrganisation:"Firm"}}])
-        if(result){
+router.get("/getFirmOrganisation", verifyToken, async (req, res) => {
+    try {
+        let result = await CSProfileModel.aggregate([{ $match: { TypeofOrganisation: "Firm" } }])
+        if (result) {
             res.send(result)
         }
-    }catch(err){
-    res.send("backend Error Occured")
+    } catch (err) {
+        res.send("backend Error Occured")
     }
 })
 // find Pvt.Ltd. Company Type
 
-router.get("/getPvt.Ltd.Organisation", verifyToken, async(req, res)=>{
-    try{
-        let result = await CSProfileModel.aggregate([{$match:{TypeofOrganisation:"Pvt.Ltd."}}])
-        if(result){
+router.get("/getPvt.Ltd.Organisation", verifyToken, async (req, res) => {
+    try {
+        let result = await CSProfileModel.aggregate([{ $match: { TypeofOrganisation: "Pvt.Ltd." } }])
+        if (result) {
             res.send(result)
         }
-    }catch(err){
-    res.send("backend Error Occured")
+    } catch (err) {
+        res.send("backend Error Occured")
     }
 })
 // find Consultancy Company Type
 
-router.get("/getConsultancyOrganisation", verifyToken, async(req, res)=>{
-    try{
-        let result = await CSProfileModel.aggregate([{$match:{TypeofOrganisation:"Consultancy"}}])
-        if(result){
+router.get("/getConsultancyOrganisation", verifyToken, async (req, res) => {
+    try {
+        let result = await CSProfileModel.aggregate([{ $match: { TypeofOrganisation: "Consultancy" } }])
+        if (result) {
             res.send(result)
         }
-    }catch(err){
-    res.send("backend Error Occured")
+    } catch (err) {
+        res.send("backend Error Occured")
     }
 })
 
 // find For todays date 
-var start = new Date();  
-start.setUTCHours(0,0,0,0);
+var start = new Date();
+start.setUTCHours(0, 0, 0, 0);
 
 var end = new Date();
-end.setUTCHours(23,59,59,999);
+end.setUTCHours(23, 59, 59, 999);
 
-let startDay =start.toUTCString() 
-let endDay=end.toUTCString()
+let startDay = start.toUTCString()
+let endDay = end.toUTCString()
 
-router.get("/getTodaysEmpProfile", verifyToken, async(req, res)=>{ 
-    try{
-        let result = await CSProfileModel.find({ createdAt: {$gte: startDay, $lte:endDay} })
-        if(result){
+router.get("/getTodaysEmpProfile", verifyToken, async (req, res) => {
+    try {
+        let result = await CSProfileModel.find({ createdAt: { $gte: startDay, $lte: endDay } })
+        if (result) {
             res.send(result)
             // console.log(result)
         }
-    }catch(err){
-    res.send("backend Error Occured")
+    } catch (err) {
+        res.send("backend Error Occured")
 
     }
 })
 
 // message sending from admin
 
-router.put("/sendMessage/:id", verifyToken, async(req, res)=>{
-    try{
+router.put("/sendMessage/:id", verifyToken, async (req, res) => {
+    try {
         let result = await CSProfileModel.updateOne({
-            _id:req.params.id},
-            {$set : req.body
-        })
-        if(result){
+            _id: req.params.id
+        },
+            {
+                $set: req.body
+            })
+        if (result) {
             res.send("success")
-        }        
-    }catch(err){
+        }
+    } catch (err) {
         res.send("some error occured")
     }
 })
 //  find all email only of Emplyees
 
-router.get("/getAllemail", async(req, res)=>{
-    try{
-        let result= await CSProfileModel.find({}, { email: 1, _id:0 })
-        res.send( result)
-    }catch(err){
+router.get("/getAllemail", async (req, res) => {
+    try {
+        let result = await CSProfileModel.find({}, { email: 1, _id: 0 })
+        res.send(result)
+    } catch (err) {
         res.send("serror error")
     }
 })
@@ -601,20 +583,20 @@ router.get("/getAllemail", async(req, res)=>{
 //  get RecentLogin Employee foradmin
 let today = new Date();
 Date.prototype.subtractDays = function (d) {
-    this.setTime(this.getTime() 
+    this.setTime(this.getTime()
         - (d * 24 * 60 * 60 * 1000));
     return this;
-    }
+}
 let a = new Date();
 a.subtractDays(100);
-router.get("/RecentLogin",  async(req, res)=>{
-    try{
-        let result = await CSProfileModel.find({ LogedInTime: {$gte:a , $lte:today} })
-        if(result){
+router.get("/RecentLogin", async (req, res) => {
+    try {
+        let result = await CSProfileModel.find({ LogedInTime: { $gte: a, $lte: today } })
+        if (result) {
             res.send(result)
         }
-    }catch(err){
-    res.send("backend Error Occured")
+    } catch (err) {
+        res.send("backend Error Occured")
     }
 })
 
@@ -622,7 +604,7 @@ router.get("/RecentLogin",  async(req, res)=>{
 router.get("/checkOnline", verifyToken, async (req, res) => {
     try {
         // let result = await StudentProfileModel.aggregate([{ $match: { isApproved: false } }])
-        let result = await CSProfileModel.aggregate([{$match:{online:true}}])
+        let result = await CSProfileModel.aggregate([{ $match: { online: true } }])
         if (result) {
             res.send(result)
         }
@@ -633,19 +615,19 @@ router.get("/checkOnline", verifyToken, async (req, res) => {
 
 
 
-router.get("/getTagsJobs/:name", async(req, res)=>{
-    let comingParam=req.params.name
-    let convertingArray=comingParam.split(",")
+router.get("/getTagsJobs/:name", async (req, res) => {
+    let comingParam = req.params.name
+    let convertingArray = comingParam.split(",")
     // console.log(convertingArray)
-    try{
+    try {
         let result = await CSProfileModel.aggregate([
             // {$match:{Tags:req.params.name}},
-            {$match:{Tags:{$in:convertingArray}}},
+            { $match: { Tags: { $in: convertingArray } } },
             { $project: { _id: 1, createdAt: 1 } }
         ])
-    // console.log(result)
-    res.send(result)
-    }catch(err){
+        // console.log(result)
+        res.send(result)
+    } catch (err) {
         res.send("server error")
         console.log(err)
     }
@@ -662,10 +644,10 @@ router.get("/jobTagsIds/:id", async (req, res) => {
     try {
         // console.log("local value",['6533629f105bb11463d44bb4', '652f76a8eff06fe23539e03d','652f73966749e34e868567e1'])
         const profile = await CSProfileModel.find({ _id: { $in: spliArray } })
-        .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
+            .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
         if (profile) {
             res.send(profile)
-    // console.log(profile)
+            // console.log(profile)
 
         } else {
             res.send("not found")
@@ -678,49 +660,49 @@ router.get("/jobTagsIds/:id", async (req, res) => {
 })
 
 //  pagination , get Limited jobs (never used API)
-router.get("/getLimitJobs/:limit", verifyHomeJobs, async(req, res)=>{
+router.get("/getLimitJobs/:limit", verifyHomeJobs, async (req, res) => {
 
     let limitValue = (parseInt(req.params.limit))
     let page = (parseInt(req.query.currentPage))
     // console.log(page)
     // console.log(limitValue)
-    try{
-       let result = await CSProfileModel.find()
-       .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
-       res.send(result)
-    }catch(err){
+    try {
+        let result = await CSProfileModel.find()
+            .sort({ "createdAt": -1 }).skip((page - 1) * limitValue).limit(limitValue)
+        res.send(result)
+    } catch (err) {
         res.send("server error")
     }
 })
 
-router.get("/getTotalCount", async(req, res)=>{
-    try{
-       let result =await CSProfileModel.estimatedDocumentCount()
-       res.status(200).send({"result":result})
-    }catch(err){
-       res.status(401).send({"result":"server issue"})
+router.get("/getTotalCount", async (req, res) => {
+    try {
+        let result = await CSProfileModel.estimatedDocumentCount()
+        res.status(200).send({ "result": result })
+    } catch (err) {
+        res.status(401).send({ "result": "server issue" })
     }
 })
 
-router.delete("/ArchiveCheckBoxArray/:ids", verifyToken, async(req, res)=>{
+router.delete("/ArchiveCheckBoxArray/:ids", verifyToken, async (req, res) => {
     let comingIds = req.params.ids.split(",")
     // console.log(comingIds)
-    try{        
+    try {
 
-        let foundJobs=await CSProfileModel.find({_id:{$in:comingIds}})
+        let foundJobs = await CSProfileModel.find({ _id: { $in: comingIds } })
 
         if (foundJobs.length > 0) {
-            let archiveJobs=foundJobs.map((jobs)=>{
-                return(
+            let archiveJobs = foundJobs.map((jobs) => {
+                return (
                     jobs
                 )
             })
-           let insertedValue= await ArchiveEmployee.insertMany({Archived:archiveJobs});
-        let deletedJobs=await CSProfileModel.deleteMany({_id:{$in:comingIds}})
+            let insertedValue = await ArchiveEmployee.insertMany({ Archived: archiveJobs });
+            let deletedJobs = await CSProfileModel.deleteMany({ _id: { $in: comingIds } })
         }
-res.send("success")
-    }catch(err){
-res.send("fail")
+        res.send("success")
+    } catch (err) {
+        res.send("fail")
     }
 })
 

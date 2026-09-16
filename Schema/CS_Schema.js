@@ -42,6 +42,9 @@ const profileSchema= new mongoose.Schema({
     phoneNumber:{
         type:String
     },
+    city:{
+        type:String
+    },
     Aadhar:{
         type:String
     },
