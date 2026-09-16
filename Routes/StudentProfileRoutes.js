@@ -385,7 +385,7 @@ router.post("/verifymail", async (req, res) => {
                         {
                             $set: {
                                 isEditEnable: true,
-                                editEnableUntil: new Date(Date.now() + 40 * 1000)
+                                editEnableUntil: new Date(Date.now() + 30 * 60 * 1000)
                             }
                         }
                     );
