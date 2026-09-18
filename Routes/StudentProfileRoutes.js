@@ -17,6 +17,13 @@ const Deleted = require("../Schema/DeletedJobsSchema")
 const fs = require('fs')
 const mongoose = require("mongoose");
 
+const { sendWhatsAppMessage} = require("./whatsapRout");
+
+
+// Send OTP
+router.post("/send-whatsapp-otp",sendWhatsAppMessage
+);
+
 // Middleware
 function verifyToken(req, res, next) {
     if (req.headers['authorization']) {
