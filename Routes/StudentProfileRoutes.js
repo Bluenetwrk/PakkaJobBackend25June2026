@@ -3,6 +3,8 @@ const router = express.Router();
 const StudentProfileModel = require("../Schema/StudentProfileSchema")
 const DeletedJobSeeker = require("../Schema/deletedJobSeeker")
 const ArchivedJobSeeker = require("../Schema/ArchivedJobSeeker")
+const CSProfileModel = require("../Schema/CS_Schema")
+
 const { Resend } = require("resend")
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -16,12 +18,13 @@ const Archived = require("../Schema/ArchiveJobsAchema")
 const Deleted = require("../Schema/DeletedJobsSchema")
 const fs = require('fs')
 const mongoose = require("mongoose");
+const {uploadToYoutube } = require("./uploadToYoutube");
 
-const { sendWhatsAppMessage} = require("./whatsapRout");
+const { sendWhatsAppMessage } = require("./whatsapRout");
 
 
 // Send OTP
-router.post("/send-whatsapp-otp",sendWhatsAppMessage
+router.post("/send-whatsapp-otp", sendWhatsAppMessage
 );
 
 // Middleware
@@ -249,9 +252,14 @@ router.post("/Glogin", body('email').isEmail(), async (req, res) => {
     }
 })
 // ............regFromResume......................
+
 router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
     try {
         let { email } = (req.body.jobseekerForm)
+        let CSCId = (req.body.CSCId)
+
+        let cscUser = await CSProfileModel.findOne({ _id: CSCId });
+        let cscUserName = btoa(cscUser.name)
         const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
         const error = validationResult(email)
         if (!error.isEmpty()) {
@@ -264,8 +272,7 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
             let token = jwt.sign({ id: result._id }, secretKey, { expiresIn: "1h" })
 
             //welcome mail...............................
-            // const verificationLink = `${url}/StudentProfile/verifymail?token=${token}`;
-            const verificationLink = `${frontendUrl}/My-Profile?token=${token}`;
+            const verificationLink = `${frontendUrl}/My-Profile?token=${token}&userName=${encodeURIComponent(cscUserName)}`;
 
             const { data, error } = await resend.emails.send({
                 from: "PakkaJob <noreply@pakkajob.in>",
@@ -340,8 +347,7 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
                 return res.send({ message: "isEditEnable is aleady true", id: user._id, token: token })
             }
 
-            // const verificationLink = `${url}/StudentProfile/verifymail?token=${token}`;
-            const verificationLink = `${frontendUrl}/My-Profile?token=${token}`;
+            const verificationLink = `${frontendUrl}/My-Profile?token=${token}&userName=${encodeURIComponent(cscUserName)}`;
 
             const { data, error } = await resend.emails.send({
                 from: "PakkaJob <noreply@pakkajob.in>",
@@ -373,6 +379,27 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
     }
 })
 
+router.post("/unVerifymail", async (req, res) => {
+    // const id = req.body
+    const { studId } = req.body;
+    try {
+        const result = await StudentProfileModel.updateOne(
+            { _id: studId },
+            {
+                $unset: {
+                    isEditEnable: false,
+                    editEnableUntil: ""
+                }
+            }
+        );
+        res.send(result)
+
+    } catch (err) {
+        res.send("backend error")
+
+    }
+
+})
 router.post("/verifymail", async (req, res) => {
     try {
         const { token } = req.body;
@@ -521,7 +548,7 @@ router.post("/loginforAdmin", body('email').isEmail(), async (req, res) => {
 })
 
 // .....update full student profile...........
-router.put("/updatProfile/:id", verifyToken, async (req, res) => {
+router.put("/updatProfile/:id",  async (req, res) => {
     try {
         const { tokenNo, HRsEmployerFeedBack, interview, ...rest } = req.body;
         const updateFields = {
@@ -1146,7 +1173,7 @@ router.get("/DeletedJobSeekerTagsIds/:id", async (req, res) => {
         console.log(err)
     }
 })
-const uploadToYoutube = require('./uploadToYoutube')
+
 //youtube video upload
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -1165,14 +1192,20 @@ router.post("/uploadToYouTube", upload.single("video"), async (req, res) => {
             return res.status(400).json({ error: "No video uploaded" });
         }
         const videoPath = req.file.path;
+                console.log("videoPath",videoPath)
+
         const videoUrl = await uploadToYoutube(videoPath);
         res.json({ url: videoUrl });
+            
+            
     } catch (error) {
         console.error("UPLOAD ERROR:", error);
         res.status(500).json({ error: "Upload failed" });
     }
 
 })
+
+
 
 router.get("/getMyCreatedResume/:id", verifyToken, async (req, res) => {
     try {

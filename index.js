@@ -66,7 +66,7 @@ app.use("/paymentAPI", PaymentRoute)
 app.use("/ReportFraud", reportFraudRoutes)
 // app.use("/LinkedIn", AuthRoutes)
 app.use("/service", serviceRoutes)
-app.use("/uploadToYoutube",uploadToYouTube)
+// app.use(uploadToYouTube)
 app.use("/CSRoute",CSRoutes)
 
 app.use("*", (req, res) => {    // if no API are made 
