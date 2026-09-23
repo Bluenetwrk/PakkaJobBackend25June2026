@@ -20,12 +20,12 @@ const fs = require('fs')
 const mongoose = require("mongoose");
 const {uploadToYoutube } = require("./uploadToYoutube");
 
-const { sendWhatsAppMessage } = require("./whatsapRout");
+const { sendWhatsAppMessage , loginWithOtp} = require("./whatsapRout");
 
 
 // Send OTP
-router.post("/send-whatsapp-otp", sendWhatsAppMessage
-);
+router.post("/send-whatsapp-otp", sendWhatsAppMessage);
+router.post("/login-with-whatsapp-otp", loginWithOtp);
 
 // Middleware
 function verifyToken(req, res, next) {

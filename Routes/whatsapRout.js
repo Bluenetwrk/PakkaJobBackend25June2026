@@ -1,24 +1,14 @@
 const axios = require("axios");
 const StudentProfileModel = require("../Schema/StudentProfileSchema")
+const secretKey = "abcde";
+const jwt = require("jsonwebtoken")
+
 
 const sendWhatsAppMessage = async (req, res) => {
     try {
         const { phoneNumber } = req.body;
-
-        console.log("phoneNumber:", phoneNumber);
-
-           // Find user
-        let user = await StudentProfileModel.findOne({
-            phoneNumber: phoneNumber
-        });
-        // If user doesn't exist, create one
-        if (!user) {
-            user = await StudentProfileModel.create({
-                phoneNumber: phoneNumber
-            });
-        }
         const url = "https://graph.facebook.com/v25.0/1346561498537437/messages";
-        let token='EAAO4sPOj5F4BSmrIxqLPX62Jj8YOoUf9Ca7lkt5OkSTt8ajTr6emAAZCMM8AKtdzDq6XmCqZAhurTNTjRjvF5cPNzmkaqmmX2xw5hvZCo5lIpy9lD6RFeEexUZCZAcjFhKZABRq4x6AbKwpZAghuc6ZA0qX8EHZAD140UQSWsUMrswRTXJ78yiIy1ZCkdZByv6RZBZCZAuhgZDZD'
+        let token = 'EAAO4sPOj5F4BSmrIxqLPX62Jj8YOoUf9Ca7lkt5OkSTt8ajTr6emAAZCMM8AKtdzDq6XmCqZAhurTNTjRjvF5cPNzmkaqmmX2xw5hvZCo5lIpy9lD6RFeEexUZCZAcjFhKZABRq4x6AbKwpZAghuc6ZA0qX8EHZAD140UQSWsUMrswRTXJ78yiIy1ZCkdZByv6RZBZCZAuhgZDZD'
 
         const response = await axios.post(
             url,
@@ -44,11 +34,6 @@ const sendWhatsAppMessage = async (req, res) => {
             }
         );
 
-        console.log(
-            "WhatsApp response:",
-            response.data
-        );
-
         const messageId = response.data?.messages?.[0]?.id;
 
         return res.status(200).json({
@@ -59,11 +44,6 @@ const sendWhatsAppMessage = async (req, res) => {
 
     } catch (error) {
 
-        console.error(
-            "WhatsApp Error:",
-            error.response?.data || error.message
-        );
-
         return res.status(500).json({
             success: false,
             message: "Failed to send WhatsApp message",
@@ -72,46 +52,21 @@ const sendWhatsAppMessage = async (req, res) => {
     }
 };
 
+const loginWithOtp = async (req, res) => {
 
-// async function checkWhatsAppNumber(phoneNumber) {
-//     try {
-//         const url =
-//             `https://graph.facebook.com/v25.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/contacts`;
+    const { phoneNumber, name } = req.body;
 
-//         const response = await axios.post(
-//             url,
-//             {
-//                 blocking: "wait",
-//                 contacts: [phoneNumber],
-//                 force_check: true
-//             },
-//             {
-//                 headers: {
-//                     Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
-//                     "Content-Type": "application/json"
-//                 }
-//             }
-//         );
-//         const contact = response.data.contacts?.[0];
-//         console.log("contact", contact)
-
-//         if (contact?.status === "valid") {
-//             return true;
-//         }
-
-//         return false;
-
-//     } catch (error) {
-//         console.error(
-//             "WhatsApp number check error:",
-//             error.response?.data || error.message
-//         );
-
-//         return false;
-//     }
-// }
-
-
+    let user = await StudentProfileModel.findOne({
+        phoneNumber: phoneNumber
+    });
+    if (!user) {
+        user = await StudentProfileModel.create({
+            phoneNumber: phoneNumber, name: name
+        });
+    }
+    let gtoken = jwt.sign({ id: user._id }, secretKey)
+    res.send({ status: "success", token: gtoken, id: user._id, action: "registered" })
+}
 module.exports = {
-    sendWhatsAppMessage
+    sendWhatsAppMessage, loginWithOtp
 };
