@@ -8,6 +8,9 @@ const Archived= require("../Schema/ArchiveJobsAchema")
 const Deleted= require("../Schema/DeletedJobsSchema")
 var nodemailer = require('nodemailer');
 const mongoose = require("mongoose");
+const fs = require('fs')
+const multer = require('multer');
+const {uploadToYoutube } = require("./uploadToYoutube");
 
 
 const { MongoClient } = require("mongodb")
@@ -815,6 +818,34 @@ router.get("/getDeletedProfile/:id",  async (req, res) => {
           res.status(500).json({ error: "Error deleting archived items" });
         }
       });
+
+      //youtube video upload
+      const storage = multer.diskStorage({
+          destination: function (req, file, cb) {
+              cb(null, "uploads/"); // folder must exist  
+          },
+          filename: function (req, file, cb) {
+              cb(null, Date.now() + "-" + file.originalname);
+          }
+      });
+      const upload = multer({ storage });
+      // API Endpoint  
+      router.post("/uploadToYouTube", upload.single("video"), async (req, res) => {
+          try {
+              if (!req.file) {
+                  return res.status(400).json({ error: "No video uploaded" });
+              }
+              const videoPath = req.file.path;
+              const videoUrl = await uploadToYoutube(videoPath);
+              fs.unlinkSync(videoPath)
+              res.json({ url: videoUrl });
+          } catch (error) {
+              console.error("UPLOAD ERROR:", error);
+              res.status(500).json({ error: "Upload failed" });
+          }
+      
+      })
+      
             
     
 module.exports = router

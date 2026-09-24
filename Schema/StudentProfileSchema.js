@@ -34,6 +34,9 @@ const profileSchema = new mongoose.Schema({
     CSCId: {
         type: String
     },
+    videoUrl: {
+        type: String
+    },
     CSCName: {
         type: String
     },

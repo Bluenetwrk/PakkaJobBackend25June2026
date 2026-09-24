@@ -37,11 +37,7 @@ async function uploadToYoutube(filePath) {
                 body: fs.createReadStream(filePath)
             }
         });
-
         const videoId = response.data.id;
-
-        console.log("YouTube Video ID:", videoId);
-
         return `https://www.youtube.com/watch?v=${videoId}`;
 
     } catch (error) {

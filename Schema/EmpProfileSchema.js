@@ -30,6 +30,9 @@ const profileSchema= new mongoose.Schema({
     panCard:{
         type:String
     },
+    videoUrl:{
+        type:String
+    },
     CompanyGSTIN:{
         type:String
     },

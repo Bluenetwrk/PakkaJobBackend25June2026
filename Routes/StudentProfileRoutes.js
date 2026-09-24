@@ -4,23 +4,22 @@ const StudentProfileModel = require("../Schema/StudentProfileSchema")
 const DeletedJobSeeker = require("../Schema/deletedJobSeeker")
 const ArchivedJobSeeker = require("../Schema/ArchivedJobSeeker")
 const CSProfileModel = require("../Schema/CS_Schema")
-
+const sendWelcomeEmail =require("./welcomMail")
 const { Resend } = require("resend")
 const resend = new Resend(process.env.RESEND_API_KEY);
-
 const bcrypt = require("bcrypt")
 const { body, validationResult } = require("express-validator")
 const jwt = require("jsonwebtoken")
 const secretKey = "abcde";
-var nodemailer = require('nodemailer');
+// var nodemailer = require('nodemailer');
 // const importverifyToken = require('./JobpostsRoutes')
 const Archived = require("../Schema/ArchiveJobsAchema")
 const Deleted = require("../Schema/DeletedJobsSchema")
 const fs = require('fs')
 const mongoose = require("mongoose");
-const {uploadToYoutube } = require("./uploadToYoutube");
+const { uploadToYoutube } = require("./uploadToYoutube");
 
-const { sendWhatsAppMessage , loginWithOtp} = require("./whatsapRout");
+const { sendWhatsAppMessage, loginWithOtp } = require("./whatsapRout");
 
 
 // Send OTP
@@ -59,41 +58,7 @@ function verifyHomeJobs(req, res, next) {
 }
 
 const multer = require('multer');
-const { v4: uuidv4 } = require('uuid');
-const path = require('path');
 
-// const storage = multer.diskStorage({
-//     destination: function (req, file, cb) {
-//         cb(null, 'public/Images');
-//     },
-//     filename: function (req, file, cb) {
-//         cb(null, uuidv4() + "_" + Date.now() + path.extname(file.originalname));
-//     }
-// });
-
-// const upload = multer({ storage: storage });
-
-// router.put("/uploadImage/:id", upload.single('image'), async (req, res) => {
-//     imagePath = req.file.filename
-//     try {
-// const binary = Buffer.from(imagePath)
-//         let result = await StudentProfileModel.updateOne(
-//             { _id: req.params.id },
-//             // { $set: { image: `https://itwalkin-backend-testrelease-2-0-1-0824.onrender.com/Images/${imagePath}` } }
-//             // { $set: { image: `http://localhost:8080/Images/${imagePath}` } }
-//             { $set: { image: `https://itwalkin-backend-testrelease-2-0-1-0824-ns0g.onrender.com/Images/${imagePath}` } }
-//             //    { $set: { image: `https://i-twalkin-backend-testrelease-2-0-1-0824.vercel.app/Images/${imagePath}`}}
-// // { $set: { image: binary } }
-
-//         )
-
-//         if (result) {
-//             res.send(result)
-//         }
-//     } catch (err) {
-//         res.send("back error occured")
-//     }
-// })
 router.post("/saveToken", verifyToken, async (req, res) => {
     try {
         let jobs = new StudentProfileModel(req.body)
@@ -213,27 +178,9 @@ router.post("/Glogin", body('email').isEmail(), async (req, res) => {
         let user = await StudentProfileModel.findOne({ email: email });
         if (user == null) {
             const user = await new StudentProfileModel({ userId: userId, email: email, Gpicture: Gpicture, name: name, isApproved: isApproved, ipAddress: ipAddress })
-            const result = await user.save(user)
+            const result = await user.save(user)            
+            await sendWelcomeEmail(user);
 
-            var transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    user: 'admin@itwalkin.comm',
-                    pass: 'hvzd mjnq yfxa eljs'
-                }
-            });
-            var mailOptions = {
-                from: 'admin@itwalkin.com',
-                to: result.email,
-                subject: `Successfully Registered with Itwalkin`,
-                html: '<p>Welcome to ITwalkin Job Portal</p>' + '<p>click <a href="http://www.itwalkin.com">itwalkin</a> to explore more </p>'
-            };
-
-            transporter.sendMail(mailOptions, function (error, info) {
-                if (error) {
-                } else {
-                }
-            });
             let gtoken = jwt.sign({ id: result._id }, secretKey)
             res.send({ status: "success", token: gtoken, id: result._id, action: "registered" })
         } else {
@@ -279,27 +226,27 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
                 to: user.email,
                 subject: "Welcome to PakkaJob 🎉",
                 html: `
-                         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 30px;">
-                           
-                           <h2 style="color: #2563eb;">
-                             Welcome to PakkaJob! 🎉
-                           </h2>
-                     
-                           <p>Hi ${user.name || "there"},</p>
-                     
-                           <p>
-                             Welcome to <strong>PakkaJob</strong>! We're excited to have you join us.
-                           </p>
-                     
-                           <p>
-                             Your account has been created successfully. To get started, 
-                             please verify your email address by clicking the button below.
-                           </p>
-                     
-                           <div style="text-align: center; margin: 30px 0;">
-                             <a
-                               href="${verificationLink}"
-                               style="
+                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 30px;">
+
+                                <h2 style="color: #2563eb;">
+                                    Welcome to PakkaJob! 🎉
+                                </h2>
+
+                                <p>Hi ${user.name || "there"},</p>
+
+                                <p>
+                                    Welcome to <strong>PakkaJob</strong>! We're excited to have you join us.
+                                </p>
+
+                                <p>
+                                    Your account has been created successfully. To get started,
+                                    please verify your email address by clicking the button below.
+                                </p>
+
+                                <div style="text-align: center; margin: 30px 0;">
+                                    <a
+                                        href="${verificationLink}"
+                                        style="
                                  background-color: #2563eb;
                                  color: white;
                                  padding: 12px 25px;
@@ -307,29 +254,29 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
                                  border-radius: 5px;
                                  display: inline-block;
                                "
-                             >
-                               Verify My Email
-                             </a>
-                           </div>
-                     
-                           <p>
-                             Once your email is verified, you can start exploring job opportunities
-                             and build your profile on PakkaJob.
-                           </p>
-                     
-                           <p>
-                             If you didn't create this account, you can safely ignore this email.
-                           </p>
-                     
-                           <p>
-                             Best regards,<br>
-                             <strong>PakkaJob Team</strong>
-                           </p>
-                     
-                         </div>
-                                  `
+                                    >
+                                        Verify My Email
+                                    </a>
+                                </div>
+
+                                <p>
+                                    Once your email is verified, you can start exploring job opportunities
+                                    and build your profile on PakkaJob.
+                                </p>
+
+                                <p>
+                                    If you didn't create this account, you can safely ignore this email.
+                                </p>
+
+                                <p>
+                                    Best regards,<br>
+                                        <strong>PakkaJob Team</strong>
+                                </p>
+
+                            </div>
+                            `
             });
-            if (err) {
+            if (error) {
                 res.send({ message: "mail not sent" })
             }
             res.send({ message: "mail was sent successfully", id: result._id, token: token })
@@ -354,19 +301,19 @@ router.post("/regFromResume", body('email').isEmail(), async (req, res) => {
                 to: user.email,
                 subject: "verify your mail",
                 html: `
-                  <p>Please confirm your email address by clicking the button below:</p>
-        <a 
-          href="${verificationLink}"
-          style="
+                            <p>Please confirm your email address by clicking the button below:</p>
+                            <a
+                                href="${verificationLink}"
+                                style="
             display:inline-block;
             padding:12px 20px;
             background:#007bff;
             color:white;
             text-decoration:none;
             border-radius:5px;">
-          Confirm Email
-        </a>
-        <p>This link will verify your account.</p>`
+                                Confirm Email
+                            </a>
+                            <p>This link will verify your account.</p>`
             });
             if (error) {
                 res.send({ message: "mail not sent" })
@@ -445,8 +392,8 @@ router.get("/checkEditEnableInTimeInterval/:id", async (req, res) => {
         const { id } = req.params;
 
         // const user = await StudentProfileModel.findOne(
-        //     { _id: id },
-        //     { isEditEnable: true }
+        //     {_id: id },
+        //     {isEditEnable: true }
         // );
 
         const user = await StudentProfileModel.findOne(
@@ -548,7 +495,7 @@ router.post("/loginforAdmin", body('email').isEmail(), async (req, res) => {
 })
 
 // .....update full student profile...........
-router.put("/updatProfile/:id",  async (req, res) => {
+router.put("/updatProfile/:id", async (req, res) => {
     try {
         const { tokenNo, HRsEmployerFeedBack, interview, ...rest } = req.body;
         const updateFields = {
@@ -1185,26 +1132,27 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 // API Endpoint  
-router.post("/uploadToYouTube", upload.single("video"), async (req, res) => {
+router.post("/uploadToYouTube/:id", upload.single("video"), async (req, res) => {
+    const id = req.params.id
 
     try {
         if (!req.file) {
             return res.status(400).json({ error: "No video uploaded" });
         }
         const videoPath = req.file.path;
-                console.log("videoPath",videoPath)
-
         const videoUrl = await uploadToYoutube(videoPath);
+        let result = await StudentProfileModel.updateOne(
+            { _id: id },
+            { $set: { videoUrl: videoUrl } }
+        )
+        fs.unlinkSync(videoPath)
         res.json({ url: videoUrl });
-            
-            
     } catch (error) {
         console.error("UPLOAD ERROR:", error);
         res.status(500).json({ error: "Upload failed" });
     }
 
 })
-
 
 
 router.get("/getMyCreatedResume/:id", verifyToken, async (req, res) => {
